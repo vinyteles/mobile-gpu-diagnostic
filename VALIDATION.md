@@ -1,3 +1,26 @@
+# Benchmark 2.2 validation
+
+Built November 5, 2026. Five ARM64 APKs use package `com.cemig.gpudiagnostic`, version code 8 / version 2.2. All labels, shared signatures, fixture hashes and absence of the cached HF account credential were verified. Exact asset checksums accompany the [v2.2.0 release](https://github.com/vinyteles/mobile-gpu-diagnostic/releases/tag/v2.2.0).
+
+## Automatic upload evidence
+
+- All five release builds, debug/test builds, and `lintRelease` passed. The inference code, model artifacts, 4096/512 token settings and 120-question fixture are unchanged from 2.1.
+- Android regression suite: **OK (28 tests)**, including the 1,080-answer synthetic queue, report recovery, batch selection and upload behavior. Four optional model/live-network tests are skipped in this default invocation.
+- New relay tests verify encrypted capability persistence, isolation across batches/new sessions, preserving an offline checkpoint across uploader recreation, retry without duplicate registration, and distinguishing server receipt from completed HF publication.
+- Android emulator → public HTTPS relay → real HF: **OK (1 test)**, using a 120-answer synthetic report and no HF credential on Android. A second invocation after adding HF endpoint discovery also passed. These are transport tests, not model speed or quality measurements.
+- Independent workstation HTTPS checks passed for readiness/service identity, idempotent registration, isolation between two sessions, duplicate uploads, an older partial upload arriving after newer results, configuration snapshots, and malformed ZIP rejection. The resulting public HF JSON, latest ZIP and configuration ZIP were downloaded without authentication at one immutable commit and their checksums verified. [Evidence dataset](https://huggingface.co/datasets/vinyteles/mobilebench-relay-test-20261105-b1-3bc9b3fd72).
+- Server suite: **55 tests passed** on h100-eliomar. Coverage includes upload validation, stream bounds, quotas, session isolation, worker retries, ordering, concurrency, catalog consistency and restart recovery. The added registration tests ensure oversized declared or chunked JSON is rejected before unbounded buffering; the deployed endpoint returned HTTP 413 in an independent live check.
+- The server agent separately passed 14 live end-to-end checks and a live recovery scenario with the worker stopped and API restarted: a pending report survived and was published after the worker returned. [Recovery evidence](https://huggingface.co/datasets/vinyteles/mobilebench-relay-test-20261105-b2-b087550d7f).
+- The server's API, worker and HTTPS tunnel run in separate supervised tmux windows. Health/readiness and the service identity were rechecked after deploying the final server fix. No GPU is used by the upload server.
+
+## Operational boundaries
+
+The initial HTTPS address is a temporary Cloudflare quick tunnel. The HF index publishes its current URL; Android follows that discovery document while checking the server identity pinned in GitHub. Network outages retain local/server checkpoints for retry. Reboot startup is configured but has not been reboot-tested. The server HF credential expires November 26, 2026 and requires operator renewal; participants need no HF setup.
+
+No new physical-phone GPU timing or semantic-quality result is claimed. Use these APKs for the next RTL/device runs and keep the app foreground until **Hugging Face synced** when possible.
+
+---
+
 # Benchmark 2.1 validation
 
 Built November 5, 2026. Five ARM64 APKs use package `com.cemig.gpudiagnostic`, version code 7 / version 2.1. All five signatures verified and use the same certificate; their labels select batches 1–5. Each APK is 57,918,897 bytes. Exact checksums accompany the [v2.1.0 release](https://github.com/vinyteles/mobile-gpu-diagnostic/releases/tag/v2.1.0).
