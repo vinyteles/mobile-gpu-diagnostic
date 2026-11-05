@@ -1,0 +1,22 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <application android:name=".DiagnosticApp" android:label="${benchmarkLabel}" android:icon="@drawable/ic_diagnostic"
+        android:theme="@style/AppTheme" android:allowBackup="false"
+        android:supportsRtl="true" android:usesCleartextTraffic="false">
+        <uses-native-library android:name="libOpenCL.so" android:required="false" />
+        <uses-native-library android:name="libvndksupport.so" android:required="false" />
+        <activity android:name=".MainActivity" android:exported="true"
+            android:configChanges="orientation|screenSize|keyboardHidden">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        <service android:name=".InferenceService" android:process=":inference" android:exported="false" />
+        <provider android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.reports" android:exported="false" android:grantUriPermissions="true">
+            <meta-data android:name="android.support.FILE_PROVIDER_PATHS" android:resource="@xml/report_paths" />
+        </provider>
+    </application>
+</manifest>

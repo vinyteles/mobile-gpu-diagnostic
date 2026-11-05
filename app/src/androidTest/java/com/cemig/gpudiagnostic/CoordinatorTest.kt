@@ -1,0 +1,64 @@
+package com.cemig.gpudiagnostic
+
+import android.content.Context
+import androidx.test.core.app.ApplicationProvider
+import androidx.test.ext.junit.runners.AndroidJUnit4
+import org.junit.Assert.*
+import org.junit.Test
+import org.junit.runner.RunWith
+import java.io.File
+
+@RunWith(AndroidJUnit4::class)
+class CoordinatorTest {
+    @Test fun changingBatchSelectsItsPresetAndPreservesTheExistingRunAndCredentials() {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val preferences = context.getSharedPreferences("benchmark-120-v2", Context.MODE_PRIVATE)
+        val before = Coordinator(context)
+        val run = before.currentRun
+        val state = File(context.filesDir, "queue-benchmark-120-v2.json").takeIf { it.isFile }?.readText()
+        val settings = CloudSettings(context)
+        val savedToken = settings.token()
+        val repository = settings.repository
+        preferences.edit().putInt("batch", -1).putStringSet("configurations", emptySet()).commit()
+
+        val switched = Coordinator(context)
+
+        assertEquals(BATCH_CONFIG_IDS, switched.selectedIds)
+        assertEquals("downloads", switched.stage)
+        assertEquals(run, switched.currentRun)
+        assertEquals(state, File(context.filesDir, "queue-benchmark-120-v2.json").takeIf { it.isFile }?.readText())
+        assertEquals(savedToken, settings.token())
+        assertEquals(repository, settings.repository)
+    }
+
+    @Test fun fullQueueRunsEstablishedGpusFirstExportsAndResumesWithoutRepeatingAnswers() {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val coordinator = Coordinator(context)
+        context.getSharedPreferences("benchmark-120-v2", Context.MODE_PRIVATE).edit().putStringSet("configurations", BENCHMARK_CONFIGS.map { it.id }.toSet()).commit()
+        fun finish() {
+            val deadline = System.currentTimeMillis() + 180_000
+            while (coordinator.isRunning && System.currentTimeMillis() < deadline) Thread.sleep(100)
+            assertFalse("Controller did not finish: ${coordinator.status}", coordinator.isRunning)
+        }
+        coordinator.start(newRun = true, smoke = true)
+        finish()
+        val run = checkNotNull(coordinator.currentRun)
+        val originals = BENCHMARK_CONFIGS.associate { config ->
+            val result = checkNotNull(readJson(File(run, "${config.id}.json")))
+            assertEquals(result.toString(), "completed", result.getString("status"))
+            assertEquals(120, result.getJSONArray("answers").length())
+            assertEquals(1, result.getJSONArray("engineSessions").length())
+            config.id to result.toString()
+        }
+        val records = BENCHMARK_CONFIGS.map { checkNotNull(readJson(File(run, "${it.id}.json"))) }
+        for (index in 1 until records.size) assertTrue(records[index].getLong("startedAtMs") >= records[index - 1].getLong("finishedAtMs"))
+        assertTrue(coordinator.reportStatus, coordinator.reportStatus.startsWith("Latest report saved"))
+        val archive = ReportExporter(context).archive(run)
+        val imported = archive.inputStream().use { ReportImporter(context).restore(it) }
+        assertEquals(9, ReportExporter(context).results(imported).size)
+        coordinator.start(smoke = true)
+        finish()
+        for (config in BENCHMARK_CONFIGS) assertEquals(originals[config.id], readJson(File(run, "${config.id}.json"))!!.toString())
+        assertEquals("completed", readJson(File(run, "queue-state.json"))!!.getString("status"))
+    }
+}

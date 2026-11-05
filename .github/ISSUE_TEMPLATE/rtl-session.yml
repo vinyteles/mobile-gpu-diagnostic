@@ -1,0 +1,33 @@
+name: RTL benchmark session
+description: Register a public session and its hardware/batch assignment.
+title: "RTL session: batch N / device"
+body:
+  - type: input
+    id: repository
+    attributes:
+      label: Public Hugging Face dataset URL
+    validations:
+      required: true
+  - type: dropdown
+    id: batch
+    attributes:
+      label: APK batch
+      options:
+        - "1: Energy GPU + LFM Vulkan"
+        - "2: LFM LiteRT GPU + Gemma mobile GPU"
+        - "3: Gemma Q8 GPU + Gemma mobile CPU"
+        - "4: LFM CPU"
+        - "5: Energy int8 CPU + Energy mixed CPU"
+    validations:
+      required: true
+  - type: input
+    id: device
+    attributes:
+      label: Phone, SoC, RAM, and Android version
+    validations:
+      required: true
+  - type: textarea
+    id: notes
+    attributes:
+      label: Session status / notes
+      description: Include run IDs and interruptions when relevant. Do not paste access tokens.

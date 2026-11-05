@@ -1,0 +1,552 @@
+{
+  "cf14469dd23331cee2f1d9dd": {
+    "answer": "O uso de apoio para os pés pode ser utilizado sempre que o trabalhador não puder manter a planta dos pés completamente apoiada no piso, como parte da adaptação do mobiliário às dimensões antropométricas do trabalhador.",
+    "evidence": [
+      {
+        "start_char": 14670,
+        "end_char": 14877,
+        "text": "17.6.4 Para adaptação do mobiliário às dimensões antropométricas do trabalhador, pode ser utilizado apoio para os pés sempre que o trabalhador não puder manter a planta dos pés completamente apoiada no piso."
+      }
+    ],
+    "sourceFile": "nr-17-atualizada-2023.pdf",
+    "sourceId": "nr-17-atualizada-2023_015_norma",
+    "category": "normas_regulamentadoras",
+    "benchmarkPath": "downloaded-assets/benchmark_mobile/normas_regulamentadoras/train-00000-of-00001.parquet",
+    "benchmarkSha256": "b34580f73def29bdc1d5966b549a04efad76e64bd93290ddb7ceb60cdbcd016e",
+    "dataset": "UFGCEMIGONA/benchmark_mobile",
+    "note": "Original benchmark reference, not an on-device generated answer; human-reviewed variant is not applied."
+  },
+  "1247168a71796d56c9c15e80": {
+    "answer": "A organização deve nomear um empregado responsável pelo cumprimento dos objetivos da CIPLAT para essa turma específica.",
+    "evidence": [
+      {
+        "start_char": 26041,
+        "end_char": 26254,
+        "text": "Quando a turma de embarque for inferior a 8 (oito) trabalhadores, considerados os lotados na plataforma, a organização deve nomear um empregado responsável pelo cumprimento dos objetivos da CIPLAT para essa turma."
+      }
+    ],
+    "sourceFile": "nr-37-atualizada-2023.pdf",
+    "sourceId": "nr-37-atualizada-2023_034_norma",
+    "category": "normas_regulamentadoras",
+    "benchmarkPath": "downloaded-assets/benchmark_mobile/normas_regulamentadoras/train-00000-of-00001.parquet",
+    "benchmarkSha256": "b34580f73def29bdc1d5966b549a04efad76e64bd93290ddb7ceb60cdbcd016e",
+    "dataset": "UFGCEMIGONA/benchmark_mobile",
+    "note": "Original benchmark reference, not an on-device generated answer; human-reviewed variant is not applied."
+  },
+  "daee62afca616e23f388dec0": {
+    "answer": "A diferença não pode ser superior a 8 (oito) bares acima da pressão interna ambiente.",
+    "evidence": [
+      {
+        "start_char": 82312,
+        "end_char": 82524,
+        "text": "IV. com dispositivo de segurança que não permita que as redes e manômetros de oxigênio, no\n\nseu interior, sejam submetidos a pressões com uma diferença de mais de 8 (oito) bares acima da pressão interna ambiente."
+      }
+    ],
+    "sourceFile": "nr-15-atualizada-2025.pdf",
+    "sourceId": "nr-15-atualizada-2025_013_norma",
+    "category": "normas_regulamentadoras",
+    "benchmarkPath": "downloaded-assets/benchmark_mobile/normas_regulamentadoras/train-00000-of-00001.parquet",
+    "benchmarkSha256": "b34580f73def29bdc1d5966b549a04efad76e64bd93290ddb7ceb60cdbcd016e",
+    "dataset": "UFGCEMIGONA/benchmark_mobile",
+    "note": "Original benchmark reference, not an on-device generated answer; human-reviewed variant is not applied."
+  },
+  "87b3f29c6c354b5bf7cad5ee": {
+    "answer": "As portas e outras saídas de emergência devem manter estanqueidade ao mau tempo ou à água, de acordo com o local e suas funções específicas de segurança, e oferecer a mesma resistência ao fogo que a das anteparas.",
+    "evidence": [
+      {
+        "start_char": 76185,
+        "end_char": 76433,
+        "text": "4.3 As portas e outras saídas de emergência devem:\n\na) manter estanqueidade ao mau tempo ou à água, de acordo com o local, considerando suas funções específicas em relação à segurança; e\n\nb) oferecer a mesma resistência ao fogo que a das anteparas."
+      }
+    ],
+    "sourceFile": "nr-30-atualizada-2023.pdf",
+    "sourceId": "nr-30-atualizada-2023_027_norma",
+    "category": "normas_regulamentadoras",
+    "benchmarkPath": "downloaded-assets/benchmark_mobile/normas_regulamentadoras/train-00000-of-00001.parquet",
+    "benchmarkSha256": "b34580f73def29bdc1d5966b549a04efad76e64bd93290ddb7ceb60cdbcd016e",
+    "dataset": "UFGCEMIGONA/benchmark_mobile",
+    "note": "Original benchmark reference, not an on-device generated answer; human-reviewed variant is not applied."
+  },
+  "11a34a465934ed00edd6fea3": {
+    "answer": "As portas e outras saídas de emergência devem manter estanqueidade ao mau tempo ou à água, de acordo com o local e suas funções específicas de segurança, e oferecer a mesma resistência ao fogo que a das anteparas.",
+    "evidence": [
+      {
+        "start_char": 76185,
+        "end_char": 76433,
+        "text": "4.3 As portas e outras saídas de emergência devem:\n\na) manter estanqueidade ao mau tempo ou à água, de acordo com o local, considerando suas funções específicas em relação à segurança; e\n\nb) oferecer a mesma resistência ao fogo que a das anteparas."
+      }
+    ],
+    "sourceFile": "nr-30-atualizada-2023.pdf",
+    "sourceId": "nr-30-atualizada-2023_027_norma",
+    "category": "normas_regulamentadoras",
+    "benchmarkPath": "downloaded-assets/benchmark_mobile/normas_regulamentadoras/train-00000-of-00001.parquet",
+    "benchmarkSha256": "b34580f73def29bdc1d5966b549a04efad76e64bd93290ddb7ceb60cdbcd016e",
+    "dataset": "UFGCEMIGONA/benchmark_mobile",
+    "note": "Original benchmark reference, not an on-device generated answer; human-reviewed variant is not applied."
+  },
+  "a32b4d5dc30dcc376e203154": {
+    "answer": "O usuário da ferramenta deve inspecioná-la visualmente para verificar sua adequada condição de uso antes de iniciar as atividades.",
+    "evidence": [
+      {
+        "start_char": 142850,
+        "end_char": 142947,
+        "text": "22.12.21 As ferramentas devem ser inspecionadas visualmente pelo usuário antes da sua utilização."
+      },
+      {
+        "start_char": 143390,
+        "end_char": 143520,
+        "text": "Antes do início das atividades, o usuário da ferramenta deve inspecioná-la visualmente para verificar sua adequada condição de uso"
+      }
+    ],
+    "sourceFile": "manual-nr22-a4-2-1.pdf",
+    "sourceId": "manual-nr22-a4-2-1_020_manual",
+    "category": "normas_regulamentadoras",
+    "benchmarkPath": "downloaded-assets/benchmark_mobile/normas_regulamentadoras/train-00000-of-00001.parquet",
+    "benchmarkSha256": "b34580f73def29bdc1d5966b549a04efad76e64bd93290ddb7ceb60cdbcd016e",
+    "dataset": "UFGCEMIGONA/benchmark_mobile",
+    "note": "Original benchmark reference, not an on-device generated answer; human-reviewed variant is not applied."
+  },
+  "5fe406c41c1f1e8e9c2e50c4": {
+    "answer": "Não é permitido à organização submeter o empregado a voos ou elevações acima de 700 metros nas 24 (vinte e quatro) horas que sucederem um mergulho seco.",
+    "evidence": [
+      {
+        "start_char": 55291,
+        "end_char": 55448,
+        "text": "1.25 Não é permitido à organização submeter o empregado a voos ou elevações acima de 700 metros nas 24 (vinte e quatro) horas que sucederem um mergulho seco."
+      }
+    ],
+    "sourceFile": "nr-07-atualizada-2022-1.pdf",
+    "sourceId": "nr-07-atualizada-2022-1_005_norma",
+    "category": "normas_regulamentadoras",
+    "benchmarkPath": "downloaded-assets/benchmark_mobile/normas_regulamentadoras/train-00000-of-00001.parquet",
+    "benchmarkSha256": "b34580f73def29bdc1d5966b549a04efad76e64bd93290ddb7ceb60cdbcd016e",
+    "dataset": "UFGCEMIGONA/benchmark_mobile",
+    "note": "Original benchmark reference, not an on-device generated answer; human-reviewed variant is not applied."
+  },
+  "7c0ba3ba186e27d9cc4bb975": {
+    "answer": "Não é permitido à organização submeter o empregado a voos ou elevações acima de 700 metros nas 24 (vinte e quatro) horas que sucederem um mergulho seco.",
+    "evidence": [
+      {
+        "start_char": 55291,
+        "end_char": 55448,
+        "text": "1.25 Não é permitido à organização submeter o empregado a voos ou elevações acima de 700 metros nas 24 (vinte e quatro) horas que sucederem um mergulho seco."
+      }
+    ],
+    "sourceFile": "nr-07-atualizada-2022-1.pdf",
+    "sourceId": "nr-07-atualizada-2022-1_005_norma",
+    "category": "normas_regulamentadoras",
+    "benchmarkPath": "downloaded-assets/benchmark_mobile/normas_regulamentadoras/train-00000-of-00001.parquet",
+    "benchmarkSha256": "b34580f73def29bdc1d5966b549a04efad76e64bd93290ddb7ceb60cdbcd016e",
+    "dataset": "UFGCEMIGONA/benchmark_mobile",
+    "note": "Original benchmark reference, not an on-device generated answer; human-reviewed variant is not applied."
+  },
+  "06780cf0c4c329b79f013bc1": {
+    "answer": "Não é permitido à organização submeter o empregado a voos ou elevações acima de 700 metros nas 24 (vinte e quatro) horas que sucederem um mergulho seco.",
+    "evidence": [
+      {
+        "start_char": 55291,
+        "end_char": 55448,
+        "text": "1.25 Não é permitido à organização submeter o empregado a voos ou elevações acima de 700 metros nas 24 (vinte e quatro) horas que sucederem um mergulho seco."
+      }
+    ],
+    "sourceFile": "nr-07-atualizada-2022-1.pdf",
+    "sourceId": "nr-07-atualizada-2022-1_005_norma",
+    "category": "normas_regulamentadoras",
+    "benchmarkPath": "downloaded-assets/benchmark_mobile/normas_regulamentadoras/train-00000-of-00001.parquet",
+    "benchmarkSha256": "b34580f73def29bdc1d5966b549a04efad76e64bd93290ddb7ceb60cdbcd016e",
+    "dataset": "UFGCEMIGONA/benchmark_mobile",
+    "note": "Original benchmark reference, not an on-device generated answer; human-reviewed variant is not applied."
+  },
+  "621312006c17f6302d224b2d": {
+    "answer": "Ao desligar um circuito ou trecho de circuito, a chave conecta à terra, simultaneamente, todos os condutores do trecho seccionado, equipotencializando assim as partes condutoras seccionadas.",
+    "evidence": [
+      {
+        "start_char": 56576,
+        "end_char": 56786,
+        "text": "Ao des- ligar um circuito ou trecho de circuito, automaticamente a chave conec- ta à terra, simultaneamente, todos os condutores do trecho seccionado, equipotencializando assim as partes condutoras seccionadas."
+      }
+    ],
+    "sourceFile": "nr-10_manual_de_auxilio_na_interpretacao_e_aplicacao_da_nr_10.pdf",
+    "sourceId": "nr-10_manual_de_auxilio_na_interpretacao_e_aplicacao_da_008_manual",
+    "category": "normas_regulamentadoras",
+    "benchmarkPath": "downloaded-assets/benchmark_mobile/normas_regulamentadoras/train-00000-of-00001.parquet",
+    "benchmarkSha256": "b34580f73def29bdc1d5966b549a04efad76e64bd93290ddb7ceb60cdbcd016e",
+    "dataset": "UFGCEMIGONA/benchmark_mobile",
+    "note": "Original benchmark reference, not an on-device generated answer; human-reviewed variant is not applied."
+  },
+  "303972d83bce88202b8c3914": {
+    "answer": "Um espaço confinado é definido como uma área não projetada para ocupação humana contínua, que possui meios limitados de entrada e saída ou configuração interna que pode causar aprisionamento/asfixia. Além disso, deve ter ventilação inexistente ou insuficiente para remover contaminantes perigosos ou deficiências/enriquecimento de oxigênio, ou conter material com potencial para engolfar/afogar o trabalhador.",
+    "evidence": [
+      {
+        "start_char": 107808,
+        "end_char": 108314,
+        "text": "31.13.13 Considera-se espaço confinado qualquer área não projetada para ocupação humana contínua, a qual tenha meios limitados de entrada e saída ou uma configuração interna que possa causar aprisionamento ou asfixia de trabalhador, e na qual a ventilação seja inexistente ou insuficiente para remover contaminantes perigosos e/ou deficiência/enriquecimento de oxigênio que possam existir ou se desenvolver, ou que contenha um material com potencial para engolfar/afogar um trabalhador que entre no espaço."
+      }
+    ],
+    "sourceFile": "nr-31-atualizada-2024-2.pdf",
+    "sourceId": "nr-31-atualizada-2024-2_028_norma",
+    "category": "normas_regulamentadoras",
+    "benchmarkPath": "downloaded-assets/benchmark_mobile/normas_regulamentadoras/train-00000-of-00001.parquet",
+    "benchmarkSha256": "b34580f73def29bdc1d5966b549a04efad76e64bd93290ddb7ceb60cdbcd016e",
+    "dataset": "UFGCEMIGONA/benchmark_mobile",
+    "note": "Original benchmark reference, not an on-device generated answer; human-reviewed variant is not applied."
+  },
+  "5b69057ffaea9609ec1e7a5c": {
+    "answer": "Deve-se efetuar tratamento estatístico dos resultados e utilizar como perfil de exposição o limite superior da média aritmética estimada para uma distribuição lognormal com confiança estatística de 95% (LSC 1,95%).",
+    "evidence": [
+      {
+        "start_char": 352204,
+        "end_char": 352525,
+        "text": "4.2.2 A organização deve, ao realizar avaliação quantitativa da exposição ocupacional com seis ou mais medições, efetuar tratamento estatístico dos resultados e utilizar como perfil de ex- posição o limite superior da média aritmética estimada para uma distribuição lognormal com confiança estatística de 95% (LSC 1,95%)."
+      }
+    ],
+    "sourceFile": "manual-nr22-a4-2-1.pdf",
+    "sourceId": "manual-nr22-a4-2-1_020_manual",
+    "category": "normas_regulamentadoras",
+    "benchmarkPath": "downloaded-assets/benchmark_mobile/normas_regulamentadoras/train-00000-of-00001.parquet",
+    "benchmarkSha256": "b34580f73def29bdc1d5966b549a04efad76e64bd93290ddb7ceb60cdbcd016e",
+    "dataset": "UFGCEMIGONA/benchmark_mobile",
+    "note": "Original benchmark reference, not an on-device generated answer; human-reviewed variant is not applied."
+  },
+  "f5ada29f4bf72ad4ce3638c5": {
+    "answer": "A dispensa do monitoramento por interface elétrica ocorre quando os dispositivos pneumáticos possuem apenas controles e comandos pneumáticos para seus movimentos perigosos. Nesses casos, deve-se garantir a simultaneidade dos comandos utilizando componentes e circuitos pneumáticos que atendam ao estado da técnica.",
+    "evidence": [
+      {
+        "start_char": 205109,
+        "end_char": 205484,
+        "text": "5.3.2 Para os dispositivos pneumáticos dotados apenas de controles e comandos pneumáticos de seus movimentos perigosos, fica dispensado o monitoramento dos dispositivos de acionamento bimanuais por meio de interface de segurança com alimentação elétrica, devendo-se garantir sua simultaneidade pelo uso de componentes e circuitos pneumáticos que atendam ao estado da técnica."
+      }
+    ],
+    "sourceFile": "nr-12-atualizada-2025.pdf",
+    "sourceId": "nr-12-atualizada-2025_010_norma",
+    "category": "normas_regulamentadoras",
+    "benchmarkPath": "downloaded-assets/benchmark_mobile/normas_regulamentadoras/train-00000-of-00001.parquet",
+    "benchmarkSha256": "b34580f73def29bdc1d5966b549a04efad76e64bd93290ddb7ceb60cdbcd016e",
+    "dataset": "UFGCEMIGONA/benchmark_mobile",
+    "note": "Original benchmark reference, not an on-device generated answer; human-reviewed variant is not applied."
+  },
+  "26d6644d6498482ba63a1847": {
+    "answer": "A avaliação deve ser realizada no local do serviço, com a participação do superior e do trabalhador ou da equipe.",
+    "evidence": [
+      {
+        "start_char": 98657,
+        "end_char": 98849,
+        "text": "Conhecida como, “conversa ao pé do poste” ou “diálogo preliminar de segurança”, a avaliação prévia deve ser realizada no local do serviço com a participação do superior e trabalhador ou equipe"
+      }
+    ],
+    "sourceFile": "nr-10_manual_de_auxilio_na_interpretacao_e_aplicacao_da_nr_10.pdf",
+    "sourceId": "nr-10_manual_de_auxilio_na_interpretacao_e_aplicacao_da_008_manual",
+    "category": "normas_regulamentadoras",
+    "benchmarkPath": "downloaded-assets/benchmark_mobile/normas_regulamentadoras/train-00000-of-00001.parquet",
+    "benchmarkSha256": "b34580f73def29bdc1d5966b549a04efad76e64bd93290ddb7ceb60cdbcd016e",
+    "dataset": "UFGCEMIGONA/benchmark_mobile",
+    "note": "Original benchmark reference, not an on-device generated answer; human-reviewed variant is not applied."
+  },
+  "dbfaa5d0c10051b38cfc34da": {
+    "answer": "Quando não for possível adotar as alternativas de alteração da forma de execução ou organização da tarefa (alínea 'c') e outras medidas técnicas aplicáveis recomendadas na avaliação ergonômica preliminar ou AET (alínea 'd'), devem obrigatoriamente ser adotadas pausas e alternância de atividades.",
+    "evidence": [
+      {
+        "start_char": 7976,
+        "end_char": 8228,
+        "text": "17.4.3.1.1 Quando não for possível adotar as alternativas previstas nas alíneas “c” e “d” do subitem 17.4.3.1, devem obrigatoriamente ser adotadas pausas e alternância de atividades previstas, respectivamente, nas alíneas “a” e “b” do subitem 17.4.3.1."
+      }
+    ],
+    "sourceFile": "nr-17-atualizada-2023.pdf",
+    "sourceId": "nr-17-atualizada-2023_015_norma",
+    "category": "normas_regulamentadoras",
+    "benchmarkPath": "downloaded-assets/benchmark_mobile/normas_regulamentadoras/train-00000-of-00001.parquet",
+    "benchmarkSha256": "b34580f73def29bdc1d5966b549a04efad76e64bd93290ddb7ceb60cdbcd016e",
+    "dataset": "UFGCEMIGONA/benchmark_mobile",
+    "note": "Original benchmark reference, not an on-device generated answer; human-reviewed variant is not applied."
+  },
+  "8d9b17b71f6bbc9b35e20865": {
+    "answer": "As saídas de emergência podem ser equipadas com dispositivos de travamento, desde que permitam fácil abertura do interior do estabelecimento. Além disso, nenhuma saída de emergência deve ser fechada à chave ou presa durante a jornada de trabalho.",
+    "evidence": [
+      {
+        "start_char": 1923,
+        "end_char": 2167,
+        "text": "23.3.5 Nenhuma saída de emergência deve ser fechada à chave ou presa durante a jornada de trabalho.\n\n23.3.5.1 As saídas de emergência podem ser equipadas com dispositivos de travamento que permitam fácil abertura do interior do estabelecimento."
+      }
+    ],
+    "sourceFile": "nr-23-atualizada-2022.pdf",
+    "sourceId": "nr-23-atualizada-2022_021_norma",
+    "category": "normas_regulamentadoras",
+    "benchmarkPath": "downloaded-assets/benchmark_mobile/normas_regulamentadoras/train-00000-of-00001.parquet",
+    "benchmarkSha256": "b34580f73def29bdc1d5966b549a04efad76e64bd93290ddb7ceb60cdbcd016e",
+    "dataset": "UFGCEMIGONA/benchmark_mobile",
+    "note": "Original benchmark reference, not an on-device generated answer; human-reviewed variant is not applied."
+  },
+  "7f2187fb2c8badeba9b1bf80": {
+    "answer": "A organização é responsável pelo transporte e guarda do carrinho coletor antes e após o término do trabalho. A execução do serviço de varrição deve preferencialmente ser realizada no contrafluxo do trânsito.",
+    "evidence": [
+      {
+        "start_char": 15637,
+        "end_char": 15759,
+        "text": "38.7.2 A organização deve ser responsável pelo transporte e guarda do carrinho coletor antes e após o término do trabalho."
+      },
+      {
+        "start_char": 15530,
+        "end_char": 15635,
+        "text": "38.7.1 A execução do serviço de varrição deve preferencialmente ser realizada no contrafluxo do trânsito."
+      }
+    ],
+    "sourceFile": "NR38atualizada2026.pdf",
+    "sourceId": "NR38atualizada2026_035_norma",
+    "category": "normas_regulamentadoras",
+    "benchmarkPath": "downloaded-assets/benchmark_mobile/normas_regulamentadoras/train-00000-of-00001.parquet",
+    "benchmarkSha256": "b34580f73def29bdc1d5966b549a04efad76e64bd93290ddb7ceb60cdbcd016e",
+    "dataset": "UFGCEMIGONA/benchmark_mobile",
+    "note": "Original benchmark reference, not an on-device generated answer; human-reviewed variant is not applied."
+  },
+  "d5a7f4e28a709dc57e5f7133": {
+    "answer": "A utilização é permitida apenas quando o material estiver em acordo com as recomendações de uso e especificações técnicas descritas em seu manual ou em sua embalagem, sendo vedada a utilização em desacordo com essas informações.",
+    "evidence": [
+      {
+        "start_char": 52279,
+        "end_char": 52450,
+        "text": "32.10.5 É vedada a utilização de material médico-hospitalar em desacordo com as recomendações de uso e especificações técnicas descritas em seu manual ou em sua embalagem."
+      }
+    ],
+    "sourceFile": "nr-32-atualizada-2023-1.pdf",
+    "sourceId": "nr-32-atualizada-2023-1_029_norma",
+    "category": "normas_regulamentadoras",
+    "benchmarkPath": "downloaded-assets/benchmark_mobile/normas_regulamentadoras/train-00000-of-00001.parquet",
+    "benchmarkSha256": "b34580f73def29bdc1d5966b549a04efad76e64bd93290ddb7ceb60cdbcd016e",
+    "dataset": "UFGCEMIGONA/benchmark_mobile",
+    "note": "Original benchmark reference, not an on-device generated answer; human-reviewed variant is not applied."
+  },
+  "e9abd05ef82242a61f143841": {
+    "answer": "A pontuação de 4 pontos é atribuída ao descumprimento dos itens 6.4.6 e 6.4.6.1 do Apêndice I e 6.4.6 e 6.4.6.1 do Apêndice II.",
+    "evidence": [
+      {
+        "start_char": 153277,
+        "end_char": 153362,
+        "text": "| 6.4.6 e 6.4.6.1 do Apêndice I e 6.4.6 e 6.4.6.1 do Apêndice II | 130940-4 | 4 | S |"
+      }
+    ],
+    "sourceFile": "nr-28-atualizada-2026.pdf",
+    "sourceId": "nr-28-atualizada-2026_025_norma",
+    "category": "normas_regulamentadoras",
+    "benchmarkPath": "downloaded-assets/benchmark_mobile/normas_regulamentadoras/train-00000-of-00001.parquet",
+    "benchmarkSha256": "b34580f73def29bdc1d5966b549a04efad76e64bd93290ddb7ceb60cdbcd016e",
+    "dataset": "UFGCEMIGONA/benchmark_mobile",
+    "note": "Original benchmark reference, not an on-device generated answer; human-reviewed variant is not applied."
+  },
+  "083c2de85c9c58f0d549ca7a": {
+    "answer": "A medição deve ser feita em decibéis (dB) utilizando um instrumento de nível de pressão sonora que opere no circuito de compensação \"A\" e no circuito de resposta lenta (SLOW). As leituras devem ser realizadas próximas ao ouvido do trabalhador.",
+    "evidence": [
+      {
+        "start_char": 203682,
+        "end_char": 203947,
+        "text": "2. Os níveis de ruído contínuo ou intermitente devem ser medidos em decibéis (dB) com instrumento de nível de pressão sonora operando no circuito de compensação \"A\" e circuito de resposta lenta (SLOW). As leituras devem ser feitas próximas ao ouvido do trabalhador."
+      }
+    ],
+    "sourceFile": "nr-15-atualizada-2025.pdf",
+    "sourceId": "nr-15-atualizada-2025_013_norma",
+    "category": "normas_regulamentadoras",
+    "benchmarkPath": "downloaded-assets/benchmark_mobile/normas_regulamentadoras/train-00000-of-00001.parquet",
+    "benchmarkSha256": "b34580f73def29bdc1d5966b549a04efad76e64bd93290ddb7ceb60cdbcd016e",
+    "dataset": "UFGCEMIGONA/benchmark_mobile",
+    "note": "Original benchmark reference, not an on-device generated answer; human-reviewed variant is not applied."
+  },
+  "dbb407dd7d0b014f7521014c": {
+    "answer": "A reciclagem é obrigatória sempre que houver modificações significativas nas instalações, na operação das máquinas ou troca de métodos, processos e organização do trabalho que impliquem em novos riscos. A carga horária mínima é definida pelo empregador e deve ocorrer dentro da jornada de trabalho.",
+    "evidence": [
+      {
+        "start_char": 64472,
+        "end_char": 64721,
+        "text": "12.16.8 Deve ser realizada capacitação para reciclagem do trabalhador sempre que ocorrerem modificações significativas nas instalações e na operação de máquinas ou troca de métodos, processos e organização do trabalho, que impliquem em novos riscos."
+      },
+      {
+        "start_char": 64723,
+        "end_char": 64927,
+        "text": "12.16.8.1 O conteúdo programático da capacitação para reciclagem deve atender às necessidades da situação que a motivou, com carga horária mínima, definida pelo empregador e dentro da jornada de trabalho."
+      }
+    ],
+    "sourceFile": "nr-12-atualizada-2025.pdf",
+    "sourceId": "nr-12-atualizada-2025_010_norma",
+    "category": "normas_regulamentadoras",
+    "benchmarkPath": "downloaded-assets/benchmark_mobile/normas_regulamentadoras/train-00000-of-00001.parquet",
+    "benchmarkSha256": "b34580f73def29bdc1d5966b549a04efad76e64bd93290ddb7ceb60cdbcd016e",
+    "dataset": "UFGCEMIGONA/benchmark_mobile",
+    "note": "Original benchmark reference, not an on-device generated answer; human-reviewed variant is not applied."
+  },
+  "34be88889d81ddeb0d3a8b6a": {
+    "answer": "A classificação relativa a Meio Ambiente para temperatura ambiente é AA.",
+    "evidence": [
+      {
+        "start_char": 15218,
+        "end_char": 15411,
+        "text": "6.17.2 A  classificação  das  influências  externas  é  encontrada  no  item  4.2.6  da  NBR  5410.  A classificação relativa a Meio Ambiente está relacionada abaixo: AA - temperatura ambiente."
+      }
+    ],
+    "sourceFile": "IT SESMT 4.4.6-005a - Projetos de Instala├з├╡es El├йtrica NR-10.pdf",
+    "sourceId": "IT_SESMT_4_4_6-005a_-_Projetos_de_Instala_es_El_tr_024",
+    "category": "documentos_internos",
+    "benchmarkPath": "downloaded-assets/benchmark_mobile/documentos_internos/train-00000-of-00001.parquet",
+    "benchmarkSha256": "b1abfd51d25185c909dd4f660546ee92e68a3b2425850fa185c28ede6c608b72",
+    "dataset": "UFGCEMIGONA/benchmark_mobile",
+    "note": "Original benchmark reference, not an on-device generated answer; human-reviewed variant is not applied."
+  },
+  "39e92cbbf3f8e999c93ca47a": {
+    "answer": "O registro de vazão deve ser ajustado para pequena vazão e para a pressão indicada para o processo (enchimento lento). Após a abertura deste registro, a equipe responsável pelo enchimento não deverá permanecer junto ao equipamento até sua finalização.",
+    "evidence": [
+      {
+        "start_char": 4969,
+        "end_char": 5288,
+        "text": "O registro de vazão, componente do conjunto de enchimento de gás SF6, deverá ser ajustado para pequena vazão e para a pressão indicada para esse processo, ou seja, para enchimento lento. Após a abertura deste registro, a equipe responsável pelo enchimento não deverá permanecer junto ao equipamento até sua finalização."
+      }
+    ],
+    "sourceFile": "IST SESMT 4.4.6-002-004 - Seguran├зa em Disjuntores Pressurizados A SF6.pdf",
+    "sourceId": "IST_SESMT_4_4_6-002-004_-_Seguran_a_em_Disjuntores_037",
+    "category": "documentos_internos",
+    "benchmarkPath": "downloaded-assets/benchmark_mobile/documentos_internos/train-00000-of-00001.parquet",
+    "benchmarkSha256": "b1abfd51d25185c909dd4f660546ee92e68a3b2425850fa185c28ede6c608b72",
+    "dataset": "UFGCEMIGONA/benchmark_mobile",
+    "note": "Original benchmark reference, not an on-device generated answer; human-reviewed variant is not applied."
+  },
+  "1331dff10e0478be03bc1cb5": {
+    "answer": "Cabe à DPR/ST emitir parecer técnico sobre o relatório avaliado. Se necessário, ela deve convocar uma nova comissão para reanálise do acidente ou emitir um relatório próprio.",
+    "evidence": [
+      {
+        "start_char": 29564,
+        "end_char": 29786,
+        "text": "Havendo discordância quanto ao resultado final da apuração, cabe à DPR/ST emitir o parecer técnico sobre o relatório avaliado e, se necessário, convocar nova comissão para reanálise do acidente ou emitir relatório próprio."
+      }
+    ],
+    "sourceFile": "IP-10.2.pdf",
+    "sourceId": "IP-10_2_002",
+    "category": "documentos_internos",
+    "benchmarkPath": "downloaded-assets/benchmark_mobile/documentos_internos/train-00000-of-00001.parquet",
+    "benchmarkSha256": "b1abfd51d25185c909dd4f660546ee92e68a3b2425850fa185c28ede6c608b72",
+    "dataset": "UFGCEMIGONA/benchmark_mobile",
+    "note": "Original benchmark reference, not an on-device generated answer; human-reviewed variant is not applied."
+  },
+  "7969b3b812e9fdc36dccf8bb": {
+    "answer": "Os membros devem realizar treinamentos simulados, removendo manequins ou pessoas, pelo menos uma vez a cada 12 meses. Além disso, pelo menos um membro da equipe deve estar disponível e possuir certificação atual em primeiros-socorros e RCP.",
+    "evidence": [
+      {
+        "start_char": 4513,
+        "end_char": 4796,
+        "text": "d) cada membro do serviço de resgate deverá ser cap acitado, fazendo resgate em espaços confinados, pelo menos uma vez a cada 12 meses, por meio de treinamentos simulados nos quais eles removam manequins ou pessoas dos atuais espaços confinados ou espaços confinados representativos."
+      },
+      {
+        "start_char": 5110,
+        "end_char": 5235,
+        "text": "Pelo menos um membro do s erviço de resgate deverá estar disponível e ter certificação atual em primeiros-socorros e em R CP;"
+      }
+    ],
+    "sourceFile": "IST SESMT 4.4.6-003-001 - Resgate em Espa├зos Confinados.pdf",
+    "sourceId": "IST_SESMT_4_4_6-003-001_-_Resgate_em_Espa_os_Confi_047",
+    "category": "documentos_internos",
+    "benchmarkPath": "downloaded-assets/benchmark_mobile/documentos_internos/train-00000-of-00001.parquet",
+    "benchmarkSha256": "b1abfd51d25185c909dd4f660546ee92e68a3b2425850fa185c28ede6c608b72",
+    "dataset": "UFGCEMIGONA/benchmark_mobile",
+    "note": "Original benchmark reference, not an on-device generated answer; human-reviewed variant is not applied."
+  },
+  "a94c08e6bc29f109fc9e51c4": {
+    "answer": "A avaliação de riscos permite avaliar a probabilidade de que os perigos identificados se concretizem em danos para os seres humanos. Além disso, visa validar as medidas de controle existentes com os trabalhadores e superiores hierárquicos, dando ciência ao responsável pelo órgão.",
+    "evidence": [
+      {
+        "start_char": 16349,
+        "end_char": 16438,
+        "text": "Avaliar a probabilidade de esses perigos se concretizarem em danos para os seres humanos;"
+      },
+      {
+        "start_char": 16677,
+        "end_char": 16796,
+        "text": "Validar as medidas de controle com os trabalhadores e superiores hierárquicos, dando ciência ao responsável pelo órgão;"
+      }
+    ],
+    "sourceFile": "IT_SESMT_4_3_1_001k_GESTAO_DOS_RISCOS_DE_SST.pdf",
+    "sourceId": "IT_SESMT_4_3_1_001k_GESTAO_DOS_RISCOS_DE_SST_004",
+    "category": "documentos_internos",
+    "benchmarkPath": "downloaded-assets/benchmark_mobile/documentos_internos/train-00000-of-00001.parquet",
+    "benchmarkSha256": "b1abfd51d25185c909dd4f660546ee92e68a3b2425850fa185c28ede6c608b72",
+    "dataset": "UFGCEMIGONA/benchmark_mobile",
+    "note": "Original benchmark reference, not an on-device generated answer; human-reviewed variant is not applied."
+  },
+  "d9a87ec9c422bd246d8e7f4c": {
+    "answer": "Porque a responsabilidade é transferida automaticamente para o gerente e posteriormente para o novo RT designado, e o cancelamento da autorização formal se aplica apenas aos casos descritos no item 5.3.1.",
+    "evidence": [
+      {
+        "start_char": 25045,
+        "end_char": 25354,
+        "text": "Com a transferência automática da responsabilidade para o gerente e posteriormente para o novo RT designado, o RT que se desligou ou foi transferido para outro órgão, não poderá cancelar as autorizações fornecidas por ele, pois o cancelamento da autorização formal se aplica aos casos descritos no item 5.3.1."
+      }
+    ],
+    "sourceFile": "IT SESMT 4.4.6-014e - Trabalho em Altura.pdf",
+    "sourceId": "IT_SESMT_4_4_6-014e_-_Trabalho_em_Altura_022",
+    "category": "documentos_internos",
+    "benchmarkPath": "downloaded-assets/benchmark_mobile/documentos_internos/train-00000-of-00001.parquet",
+    "benchmarkSha256": "b1abfd51d25185c909dd4f660546ee92e68a3b2425850fa185c28ede6c608b72",
+    "dataset": "UFGCEMIGONA/benchmark_mobile",
+    "note": "Original benchmark reference, not an on-device generated answer; human-reviewed variant is not applied."
+  },
+  "cbadf53aea2b020ad69b72f0": {
+    "answer": "Existe o risco de explosão do invólucro de porcelana e projeção de partículas, o que pode causar lesões como contusão, corte e perfuração nos trabalhadores dentro da área do entorno do equipamento.",
+    "evidence": [
+      {
+        "start_char": 1830,
+        "end_char": 2101,
+        "text": "Durante  as  intervenções,  em  disjuntores  pressurizados  a  SF6,  existe  o  risco  de  explosão  do invólucro de porcelana e projeção de partículas, com potencial de lesão (como contusão, corte e perfuração) nos trabalhadores dentro da área do entorno do equipamento."
+      }
+    ],
+    "sourceFile": "IST SESMT 4.4.6-002-004 - Seguran├зa em Disjuntores Pressurizados A SF6.pdf",
+    "sourceId": "IST_SESMT_4_4_6-002-004_-_Seguran_a_em_Disjuntores_037",
+    "category": "documentos_internos",
+    "benchmarkPath": "downloaded-assets/benchmark_mobile/documentos_internos/train-00000-of-00001.parquet",
+    "benchmarkSha256": "b1abfd51d25185c909dd4f660546ee92e68a3b2425850fa185c28ede6c608b72",
+    "dataset": "UFGCEMIGONA/benchmark_mobile",
+    "note": "Original benchmark reference, not an on-device generated answer; human-reviewed variant is not applied."
+  },
+  "cd406660166dfd12c568308a": {
+    "answer": "Devem ser registrados obrigatoriamente os nomes e matrículas (ou CPF, no caso de contratados) de todos os empregados que façam parte da equipe durante a inspeção.",
+    "evidence": [
+      {
+        "start_char": 7306,
+        "end_char": 7557,
+        "text": "De forma a permitir a rastreabilidade dos empregados inspecionados, os nomes e matrículas ou CPF (no  caso  de  contratados)  de todos  os  empregados  que  façam parte da equipe  durante  a inspeção, devem ser obrigatoriamente registrados no sistema."
+      }
+    ],
+    "sourceFile": "IT_SESMT_4_5_3_001b_INSPECAO_DE_SEGURANCA_SIMASP.pdf",
+    "sourceId": "IT_SESMT_4_5_3_001b_INSPECAO_DE_SEGURANCA_SIMASP_029",
+    "category": "documentos_internos",
+    "benchmarkPath": "downloaded-assets/benchmark_mobile/documentos_internos/train-00000-of-00001.parquet",
+    "benchmarkSha256": "b1abfd51d25185c909dd4f660546ee92e68a3b2425850fa185c28ede6c608b72",
+    "dataset": "UFGCEMIGONA/benchmark_mobile",
+    "note": "Original benchmark reference, not an on-device generated answer; human-reviewed variant is not applied."
+  },
+  "3e91bdcac5f3bc4f85739bb0": {
+    "answer": "Os óculos não devem ser deixados com as lentes voltadas para superfícies que possam danificá-las, nem mal acondicionados próximos a substâncias agressivas ou expostos a intempéries. Devem ser guardados preferencialmente em embalagem apropriada (ou bolsa protetora fornecida pela empresa), longe de fontes de calor, produtos químicos, óleos, solventes e luz do sol. Além disso, nunca devem ser guardados no bolso traseiro da calça.",
+    "evidence": [
+      {
+        "start_char": 5288,
+        "end_char": 5388,
+        "text": "Não deixar os óculos com as lentes voltadas para qualquer tipo de superfície que possam danificálas."
+      },
+      {
+        "start_char": 5390,
+        "end_char": 5503,
+        "text": "Não  deixar  os  óculos  mal  acondicionados,  próximos  de  substâncias  agressivas  e  expostas  a intempéries."
+      },
+      {
+        "start_char": 5505,
+        "end_char": 5694,
+        "text": "Os  óculos  devem  ser  acondicionados  preferencialmente  em  embalagem  apropriada,  longe  de fontes de calor. O local deve ser livre de produtos químicos, óleos, solventes e luz do sol."
+      },
+      {
+        "start_char": 5853,
+        "end_char": 5903,
+        "text": "Nunca guarde os óculos em bolso traseiro da calça."
+      }
+    ],
+    "sourceFile": "IST_SESMT_4.4.6_001_003d_AQUISICAO_DE_OCULOS_DE_SEGURANCA_COM_LENTE_CORRETIVA.pdf",
+    "sourceId": "IST_SESMT_4_4_6_001_003d_AQUISICAO_DE_OCULOS_DE_SE_026",
+    "category": "documentos_internos",
+    "benchmarkPath": "downloaded-assets/benchmark_mobile/documentos_internos/train-00000-of-00001.parquet",
+    "benchmarkSha256": "b1abfd51d25185c909dd4f660546ee92e68a3b2425850fa185c28ede6c608b72",
+    "dataset": "UFGCEMIGONA/benchmark_mobile",
+    "note": "Original benchmark reference, not an on-device generated answer; human-reviewed variant is not applied."
+  }
+}

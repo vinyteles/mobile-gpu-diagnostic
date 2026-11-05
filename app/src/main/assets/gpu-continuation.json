@@ -1,0 +1,41 @@
+{
+  "sourceRunId": "rag-1793807018113",
+  "sourceReportSha256": "3347bb1f98122e4dc825b5d6c40333d92eb75dcd49291c4580a004bb722f23cc",
+  "fixtureSha256": "3a5ed24a726e53d53b5056b8849f9581a6dcf8f76ff54513da9418022fd38e77",
+  "modelSha256": "63a7374c71b404eb4f8cf8322beca2bc862061cba29adb368131c73e198f59e1",
+  "completedQuestionIds": [
+    "cf14469dd23331cee2f1d9dd",
+    "1247168a71796d56c9c15e80",
+    "daee62afca616e23f388dec0",
+    "87b3f29c6c354b5bf7cad5ee",
+    "11a34a465934ed00edd6fea3",
+    "a32b4d5dc30dcc376e203154",
+    "5fe406c41c1f1e8e9c2e50c4",
+    "7c0ba3ba186e27d9cc4bb975",
+    "06780cf0c4c329b79f013bc1",
+    "621312006c17f6302d224b2d"
+  ],
+  "selectedQuestionIds": [
+    "303972d83bce88202b8c3914",
+    "5b69057ffaea9609ec1e7a5c",
+    "f5ada29f4bf72ad4ce3638c5",
+    "26d6644d6498482ba63a1847",
+    "dbfaa5d0c10051b38cfc34da",
+    "8d9b17b71f6bbc9b35e20865",
+    "7f2187fb2c8badeba9b1bf80",
+    "d5a7f4e28a709dc57e5f7133",
+    "e9abd05ef82242a61f143841",
+    "083c2de85c9c58f0d549ca7a",
+    "dbb407dd7d0b014f7521014c",
+    "34be88889d81ddeb0d3a8b6a",
+    "39e92cbbf3f8e999c93ca47a",
+    "1331dff10e0478be03bc1cb5",
+    "7969b3b812e9fdc36dccf8bb",
+    "a94c08e6bc29f109fc9e51c4",
+    "d9a87ec9c422bd246d8e7f4c",
+    "cbadf53aea2b020ad69b72f0",
+    "cd406660166dfd12c568308a",
+    "3e91bdcac5f3bc4f85739bb0"
+  ],
+  "note": "Only these 20 questions run. Earlier answers remain in the source report; new sessions are timed independently."
+}
