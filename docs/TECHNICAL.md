@@ -12,7 +12,7 @@ After completion, each public HF session repository contains:
 
 - `latest.json`: latest progress, device, batch, completed counts and checksum.
 - `runs/<run-id>/progress.json` and `runs/<run-id>/latest.zip`: cumulative report.
-- `runs/<run-id>/configurations/<configuration>.zip`: cumulative configuration snapshot.
+- `runs/<run-id>/configurations/<configuration>.zip` and `.json`: added when a complete configuration-end snapshot arrives.
 
 Wire field `batch` uses IDs 101–109 for configuration APKs 1–9. IDs 1–5 keep their original v2.2 batch meanings, so upgrades create separate upload sessions without relabelling historical data. Reports remain cumulative when continuing the same run across APK updates or importing a report.
 

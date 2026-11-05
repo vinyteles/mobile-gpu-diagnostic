@@ -26,6 +26,8 @@ phone ──HTTPS──▶ Cloudflare quick tunnel ──▶ cloudflared (outbou
 Each process runs under its own restart loop (`server/deploy/supervise.sh`, exponential
 backoff up to 60 s) in one window of the tmux session **`mobilebench-relay`**. The tmux
 server is independent of the login shell, so closing a terminal does not stop it.
+The host must stay awake and connected during phone runs. Suspending or powering off the
+host interrupts uploads; phones keep their pending reports for retry.
 
 ## Layout (outside Git)
 

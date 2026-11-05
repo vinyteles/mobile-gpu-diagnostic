@@ -1,3 +1,21 @@
+# Benchmark 2.4 validation
+
+Built November 5, 2026. Nine ARM64 APKs use package `com.cemig.gpudiagnostic`, version code 10 / version 2.4. Each runs one configuration with 120 questions. Exact checksums accompany the [v2.4.0 release](https://github.com/vinyteles/mobile-gpu-diagnostic/releases/tag/v2.4.0).
+
+- All nine release builds, debug/test builds and `lintRelease` passed. Every APK's version, label, wire profile (101–109), ARM64 architecture, signature, fixture hash and new bootstrap URL were checked. The signing certificate matches earlier releases, allowing updates that retain models and answers. Model hashes, inference implementations and 4096/512 token settings are unchanged.
+- Android regression suite: **OK (31 tests)**; four optional integrations are skipped in the default invocation. A new IPC regression verifies that each completed answer queues its checkpoint before the next question starts. The single-configuration 120-answer test exercises per-question exports. The artificial full nine-configuration queue separately verifies ordering and resume without exporting all 1,080 intermediate ZIPs.
+- Upload migration checks verify that new service credentials are separate and old session/outbox files remain intact. The app queues the current saved run when reopened. The existing offline retry test still verifies durable local checkpoints and distinguishes receipt from HF publication.
+- Server suite in the integrated checkout: **67 passed, 1 skipped** (the optional pre-existing example ZIP was absent). Coverage includes complete-question-ID validation, all nine profile mappings, partial retention across restarts, duplicate/out-of-order snapshots, quotas, per-question upload rates and HF retry behavior.
+- Live server test through public HTTPS: **24 checks passed**, including 1/42/119-answer snapshots, stopped/error partials, an API/worker restart, no HF repository before 120 answers, completion publication, immutable JSON/ZIP checksums, and a late partial that cannot regress the published report. [Synthetic evidence dataset](https://huggingface.co/datasets/vinyteles/mobilebench-relay-test-20261105-b101-313fda32db).
+- Android emulator → published GitHub bootstrap/HF discovery → replacement relay → real HF: **OK (1 test)**. A one-answer report showed `collecting`, `Server saved 1 / 120`, and no HF repository. Completing the same run to 120 published successfully. The public JSON and ZIP were fetched without authentication at commit `400dfce08495cf255aec746686dedad4edc69fc1`; their checksum matched. [Android transport evidence](https://huggingface.co/datasets/vinyteles/mobilebench-relay-test-20261105-b101-ccd7550caa).
+- Tracked source and all nine APKs were scanned for the active HF credential, token/private-key patterns and private server identifiers; none were found. The deployed server source matches the integrated `server/` tree. Public health/readiness and service identity passed.
+
+These are synthetic control-flow, durability and transport checks, not new phone GPU performance or answer-quality results. Per-question ZIP export adds wall-time overhead; network transfer is asynchronous. This release does not diagnose or claim to fix the reported whole-phone freeze. A server checkpoint protects only answers acknowledged before a disconnect.
+
+The relay host must remain awake and online. Services survive terminal closure, but after host reboot the operator must start them again; no automatic boot service is installed. Tunnel URL changes are discovered through the new [HF index](https://huggingface.co/datasets/vinyteles/mobilebench-index-v2). Partial reports remain on server disk; HF report files appear only when all assigned questions are complete. Credential renewal is still required before the recorded November 26, 2026 expiry.
+
+---
+
 # Benchmark 2.3 validation
 
 Built November 5, 2026. Nine ARM64 APKs use package `com.cemig.gpudiagnostic`, version code 9 / version 2.3. Each APK runs exactly one configuration with 120 questions. Exact checksums accompany the [v2.3.0 release](https://github.com/vinyteles/mobile-gpu-diagnostic/releases/tag/v2.3.0).
