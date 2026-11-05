@@ -1,3 +1,19 @@
+# Benchmark 2.3 validation
+
+Built November 5, 2026. Nine ARM64 APKs use package `com.cemig.gpudiagnostic`, version code 9 / version 2.3. Each APK runs exactly one configuration with 120 questions. Exact checksums accompany the [v2.3.0 release](https://github.com/vinyteles/mobile-gpu-diagnostic/releases/tag/v2.3.0).
+
+- All nine release builds, debug/test builds and `lintRelease` passed. Every APK's label, wire profile ID (101–109), ARM64 architecture, signature and fixture hash were checked. All use the same signing certificate as v2.2, so installation updates preserve app data. The questions, model hashes, inference implementations and 4096/512 token settings are unchanged.
+- Android regression suite: **OK (29 tests)**; four optional integration tests are skipped in the default invocation. Coverage retains the full 1,080-answer synthetic queue, ordering, failure recovery and report import/resume.
+- A new regression fills the old saved selection with all nine configurations and verifies that the default controller downloads and runs only the assigned model, produces 120 synthetic answers, and resumes without repeating or changing them. This passed for configuration 1 and, in a separate **OK (1 test)** invocation, configuration 9.
+- A real debug APK update from configuration 1 to configuration 9 preserved the existing queue and report JSON files byte for byte. The preparation screen showed only configuration 9 and its required model; the migration regression also preserves existing run and credential state.
+- Server deployment on h100-eliomar: **56 tests passed**. Registration and upload work for all nine new profile IDs; legacy IDs 1–5 retain their historical batch labels. Separate Android tests verify that old and new profile IDs use distinct encrypted session capabilities.
+- Android emulator → published GitHub bootstrap/HF discovery → public relay → real HF: **OK (1 test)** using profile 101 and a 120-answer synthetic report. Its public JSON and ZIP were fetched without authentication at the same immutable HF commit and the ZIP checksum matched. [Evidence dataset](https://huggingface.co/datasets/vinyteles/mobilebench-relay-test-20261105-b101-2a0ec28931).
+- Live server health, readiness and persistent service identity passed after deployment. Model/configuration downloads, upload retry and checkpoint/import/resume remain available.
+
+These are packaging, control-flow and transport checks. No new physical-phone GPU timing or answer-quality result is claimed. The README time budgets include 30 extra minutes per APK; configurations 5, 6 and 9 may still need another reservation. The temporary-tunnel and credential-renewal boundaries described below for v2.2 still apply.
+
+---
+
 # Benchmark 2.2 validation
 
 Built November 5, 2026. Five ARM64 APKs use package `com.cemig.gpudiagnostic`, version code 8 / version 2.2. All labels, shared signatures, fixture hashes and absence of the cached HF account credential were verified. Exact asset checksums accompany the [v2.2.0 release](https://github.com/vinyteles/mobile-gpu-diagnostic/releases/tag/v2.2.0).
