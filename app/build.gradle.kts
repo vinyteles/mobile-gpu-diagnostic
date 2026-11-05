@@ -11,8 +11,8 @@ android {
         applicationId = "com.cemig.gpudiagnostic"
         minSdk = 31
         targetSdk = 36
-        versionCode = 7
-        versionName = "2.1"
+        versionCode = 8
+        versionName = "2.2"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         buildConfigField("int", "BENCHMARK_PROFILE", benchmarkProfile.toString())
         manifestPlaceholders["benchmarkLabel"] = "CEMIG Benchmark · Batch $benchmarkProfile"

@@ -1,0 +1,7 @@
+{
+  "schemaVersion": 1,
+  "endpoint": "https://memorial-simon-bush-flickr.trycloudflare.com",
+  "serviceInstanceId": "mbr_52ee5dc7e60dfcf2266e54e506bdb10b",
+  "discoveryUrl": "https://huggingface.co/datasets/vinyteles/mobilebench-index/resolve/main/endpoint.json",
+  "temporaryTunnel": true
+}

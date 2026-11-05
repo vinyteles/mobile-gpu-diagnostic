@@ -13,7 +13,6 @@ import android.os.Handler
 import android.os.Looper
 import android.view.View
 import android.view.WindowManager
-import android.widget.EditText
 import android.widget.CheckBox
 import android.widget.Button
 import android.widget.LinearLayout
@@ -108,7 +107,7 @@ class MainActivity : Activity() {
         }
         label(content, "CEMIG  /  MODEL BENCHMARK", 12f, true).setTextColor(green)
         label(content, BENCHMARK_BATCH_NAME, 18f, true)
-        button(content, "Hugging Face upload settings") { cloudSettings() }
+        button(content, "Report upload status") { cloudSettings() }
         if (stage == "downloads") {
             label(content, "Prepare files", 28f, true)
             label(content, "STEP 1 OF 2", 12f, true)
@@ -168,7 +167,7 @@ class MainActivity : Activity() {
             repeatButton = button(content, "Start a new run (keep old reports)") { coordinator.start(newRun = true, smoke = smoke) }
         }
         if (stage != "downloads") button(content, "Import previous report ZIP") { chooseReport() }
-        label(content, "Local reports are always saved. When enabled, Hugging Face receives checkpoints using your repository visibility.", 12f)
+        label(content, "Reports are saved locally and uploaded automatically to a public Hugging Face session repository.", 12f)
         setContentView(ScrollView(this).apply { addView(content) })
         renderProgress()
     }
@@ -240,40 +239,27 @@ class MainActivity : Activity() {
 
     private fun cloudSettings() {
         val layout = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(dp(20), dp(12), dp(20), 0) }
-        label(layout, "Use one dataset repository per RTL session. Public repositories let colleagues follow results. The same setup is preserved across batch APK updates.")
-        val repository = EditText(this).apply {
-            setSingleLine(true); hint = "your-user/mobilebench-session-name"; setText(cloud.settings.repository)
-            inputType = android.text.InputType.TYPE_CLASS_TEXT or android.text.InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS
-        }
-        layout.addView(repository)
-        val credential = EditText(this).apply {
-            setSingleLine(true); hint = if (cloud.settings.token() != null) "Token saved · leave blank to keep it" else "Paste a repository-scoped HF write token"
-            inputType = android.text.InputType.TYPE_CLASS_TEXT or android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD
-            importantForAutofill = View.IMPORTANT_FOR_AUTOFILL_NO
-        }
-        layout.addView(credential)
-        label(layout, "Reports include questions, retrieved context, answers, and metrics. Upload after each configuration and every minute during a run. Failed uploads retry while this app is open. The token is encrypted on this device and is excluded from reports.", 13f)
-        val dialog = AlertDialog.Builder(this).setTitle("Hugging Face checkpoints").setView(layout)
-            .setPositiveButton("Connect", null).setNegativeButton("Close", null)
-            .setNeutralButton("Disable uploads") { _, _ -> cloud.disable() }.create()
-        dialog.setOnShowListener {
-            dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
-                val repo = repository.text.toString().trim()
-                val token = credential.text.toString().trim().ifBlank { cloud.settings.token().orEmpty() }
-                credential.text.clear()
-                dialog.getButton(AlertDialog.BUTTON_POSITIVE).isEnabled = false
-                Thread({
-                    runCatching { cloud.configure(repo, token); coordinator.syncReport() }
-                        .onSuccess { runOnUiThread { dialog.dismiss(); Toast.makeText(this, "Hugging Face uploads enabled", Toast.LENGTH_LONG).show() } }
-                        .onFailure { error -> runOnUiThread {
-                            dialog.getButton(AlertDialog.BUTTON_POSITIVE).isEnabled = true
-                            val detail = error.message?.takeIf { it.startsWith("Hugging Face HTTP") || it.startsWith("Enter ") }
-                                ?: "Connection failed (${error.javaClass.simpleName}). Check the repository, token, and network."
-                            Toast.makeText(this, detail, Toast.LENGTH_LONG).show()
-                        } }
-                }, "hf-connect").start()
+        label(layout, "Reports upload automatically. Each session gets a public Hugging Face repository. No account or token setup is needed.")
+        label(layout, cloud.status)
+        val address = cloud.repositoryUrl
+        if (address.isNotBlank()) {
+            label(layout, address, 13f).setTextIsSelectable(true)
+            button(layout, "Copy results link") {
+                getSystemService(ClipboardManager::class.java).setPrimaryClip(ClipData.newPlainText("Benchmark results", address))
+                Toast.makeText(this, "Results link copied", Toast.LENGTH_SHORT).show()
             }
         }
+        label(layout, "Uploads include questions, retrieved context, reference and generated answers, device information, and metrics. Keep the app open until the status says Hugging Face synced.", 13f)
+        val dialog = AlertDialog.Builder(this).setTitle("Automatic report uploads").setView(layout)
+            .setPositiveButton("Retry uploads") { _, _ -> cloud.retry() }
+            .setNegativeButton("Close", null)
+            .setNeutralButton("New upload session") { _, _ ->
+                if (!coordinator.isRunning) {
+                    cloud.newSession()
+                    Thread({ coordinator.syncReport(); cloud.retry() }, "new-upload-session").start()
+                }
+            }.create()
+        dialog.setOnShowListener { dialog.getButton(AlertDialog.BUTTON_NEUTRAL).isEnabled = !coordinator.isRunning }
         dialog.show()
     }
 

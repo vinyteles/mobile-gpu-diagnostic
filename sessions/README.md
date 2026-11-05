@@ -1,18 +1,9 @@
 # Shared RTL sessions
 
-Use a separate public Hugging Face dataset repository for each RTL reservation.
-Each participant uses their own Samsung Developer account, HF account, and repository-scoped write token.
+Install the assigned 2.2 batch APK and tap **Start / resume selected**. It automatically creates a public HF session through the upload relay; participants need no HF account or token. Use your own Samsung Developer account/reservation for RTL.
 
-Create it in the HF website, or run:
+Use **Report upload status → Copy results link** to share the public dataset URL in a session issue, together with batch, phone, SoC, RAM, and Android version. All sessions also appear in https://huggingface.co/datasets/vinyteles/mobilebench-index.
 
-```sh
-python scripts/create-hf-session.py --batch 1 --device 'Galaxy S25 FE / Exynos 2400' --manifest reports/my-session.json
-```
+New installations, runs and batch changes create separate upload sessions. If the same installation/run/batch is reused for another reservation, stop first and choose **New upload session**. Imported reports preserve original answer/device provenance.
 
-Share the public repository URL in a session issue or add the generated manifest here through a pull request.
-Do not include tokens in issues, manifests, commits, or screenshots.
-
-The default benchmark has 30 base questions in four wording variants. Every configuration
-runs those same 120 inputs. Parallel assignment speeds up coverage, but different SoCs,
-RAM sizes, runtimes, heat and session restarts must remain separate in timing comparisons.
-Even with the same hardware, repeated sessions should retain their run identities.
+Never include credentials or session capabilities in issues, manifests, commits or screenshots. Timings from different hardware must remain separate. The suite has 30 base questions in four wording variants, giving 120 inputs per configuration.

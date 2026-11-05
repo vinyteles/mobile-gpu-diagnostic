@@ -2,7 +2,7 @@
 
 Standalone Android benchmark for Energy-Mobile, LFM3 1.7B, and original Gemma 4 E2B-IT. Compare generation on CPU, LiteRT-LM GPU, and llama.cpp Vulkan using the same saved retrieval contexts. Five APK presets make it easier to divide the work across two-hour Samsung RTL sessions and colleagues.
 
-[Download APKs](https://github.com/vinyteles/mobile-gpu-diagnostic/releases/tag/v2.1.0) · [Register a session](https://github.com/vinyteles/mobile-gpu-diagnostic/issues/new/choose) · [HF project index](https://huggingface.co/datasets/vinyteles/mobile-benchmark-results)
+[Download APKs](https://github.com/vinyteles/mobile-gpu-diagnostic/releases/tag/v2.2.0) · [Register a session](https://github.com/vinyteles/mobile-gpu-diagnostic/issues/new/choose) · [HF project index](https://huggingface.co/datasets/vinyteles/mobile-benchmark-results)
 
 ## The five APKs
 
@@ -18,60 +18,59 @@ Run in this order on one device to attempt all GPUs before CPU-only batches. Col
 
 Every configuration has **120 prompts**: 30 base questions × `clean`, `technical`, `operational`, `lay`. A complete eligible suite has 1,080 answers. Original Gemma's mobile bundle uses mixed **2/4/8-bit**, which is different from Energy's mixed 4/8-bit.
 
-The APKs share the same app identity and signing key. Installing another published batch APK updates the app, selects that batch, and preserves downloaded models, answers and HF setup on the same phone. A fresh RTL device needs downloads again. Runtime caches need additional disk space; allow 25 GB free if keeping every model and cache together.
+The APKs share the same app identity and signing key. Installing another published batch APK updates the app, selects that batch, and preserves downloaded models and answers on the same phone. Each batch/run gets its own automatic upload session. A fresh RTL device needs downloads again. Runtime caches need additional disk space; allow 25 GB free if keeping every model and cache together.
 
 A batch is **not guaranteed to finish in two hours**. The new GPU configurations need physical-device validation. Q8 is experimental: its 5.05 GB GGUF is skipped if available RAM is below model size plus 768 MiB; passing that check does not guarantee driver compatibility.
 
 ## Start a session
 
-1. Reserve the phone and install the relevant APK.
-2. Create a **public HF dataset repository for this RTL reservation**, under your own account. For example, use a name containing the date, phone and batch. You can use the HF website or the helper below.
-3. Create an HF fine-grained **write token scoped only to that repository**. In the app, open **Hugging Face upload settings**, enter `owner/repository`, paste the token and tap **Connect**. Do not share account credentials among colleagues. Private repositories are also supported when desired.
-4. Tap **Start / resume selected**. The app downloads and verifies the required models, then runs the preselected configurations. Expand cards for metrics.
-5. Share the public session URL through a GitHub session issue or a manifest in `sessions/`. We can then monitor that session without write access.
+1. Download the assigned batch APK from the release and install it on an ARM64 phone with Android 12 or later, or a Samsung RTL phone.
+2. Open the app and tap **Start / resume selected**. Keep the batch's preselected configurations. Models download and verify automatically; questions, contexts and references are included.
+3. Keep the app in the foreground. Expand configuration cards for metrics. The app keeps the screen awake while foreground; it cannot extend an RTL reservation.
+4. Open **Report upload status** to see progress or copy the public HF results link. Wait for **Hugging Face synced** before ending the session when possible.
 
-Keep the app in the foreground. It sets Android's keep-screen-on flag, but cannot extend an RTL reservation or guarantee continued execution after Android closes/backgrounds it. Each reservation still needs to be started by a participant; five APKs do not create an unattended chain of reservations.
+**No HF account, token, repository creation, Python, or Android Studio is needed to run the published APKs.** The server on h100-eliomar creates a public dataset repository automatically and publishes the reports. The app creates a random capability for its own session; the HF account credential stays on the server.
+
+All sessions appear in the [public HF index](https://huggingface.co/datasets/vinyteles/mobilebench-index). Participants can also register a [session issue](https://github.com/vinyteles/mobile-gpu-diagnostic/issues/new/choose) to coordinate batch/hardware assignments. Share the public results URL, batch, phone model, RAM and Android version. Each participant uses their own Samsung account/reservation when using RTL.
+
+Fresh installations, new runs and batch changes create separate upload sessions. Resuming the same run/batch preserves its session, including after an app restart. If the same installed app/run/batch is reused for another reservation, stop the benchmark and choose **Report upload status → New upload session** to separate it without discarding answers.
 
 ## Checkpoints and recovery
 
-The app saves each completed answer internally. It also saves a ZIP to Downloads and queues an HF checkpoint every minute while running, after each configuration, and when stopping. During downloads it publishes periodic preparation progress too. Uploads run on a separate worker; network failures retain a local outbox and retry while the app is open. Check the displayed last-sync state before ending a session.
+Every completed answer is saved internally. A ZIP is saved to Downloads and queued locally about every minute, after each configuration, and when stopping. Download preparation progress is included. Network work runs on a separate thread and retries automatically while the app is open.
 
-Each HF session repository contains:
+The relay acknowledges receipt only after durable storage. **Received by server** means the checkpoint is safe in its queue; **Hugging Face synced** means publication has completed. The server retries HF outages after app disconnects and keeps hash-matched JSON/ZIP files together in one commit. Routine HF updates may be paced to about 90 seconds; final/configuration snapshots receive priority. Neither upload interval is a guaranteed maximum when connectivity fails.
 
-- `latest.json`: latest progress, device, batch, completed counts, and report checksum.
-- `runs/<run-id>/progress.json`: per-run progress.
-- `runs/<run-id>/latest.zip`: cumulative report, with all completed answers and partial diagnostics.
-- `runs/<run-id>/configurations/<configuration>.zip`: cumulative snapshot after that configuration.
-- `connections/`: connection checks with installation IDs and app version; no tokens.
+Each public HF session repository contains:
 
-Public uploads include the questions, retrieved passages, reference answers, generated answers, metrics, and device metadata. Credentials are encrypted with Android Keystore and excluded from source, APKs, and reports.
+- `latest.json`: latest progress, device, batch, completed counts and checksum.
+- `runs/<run-id>/progress.json` and `runs/<run-id>/latest.zip`: cumulative report.
+- `runs/<run-id>/configurations/<configuration>.zip`: cumulative configuration snapshot.
 
-To continue after a reservation ends, download its latest ZIP, install the next APK on the new device, and use **Import previous report ZIP**. Matching completed answers are retained. The imported report keeps original device/engine-session provenance; new answers record the new device. Setup a new HF session repository for that reservation.
+Public reports contain questions, retrieved passages, reference answers, generated answers, metrics and device metadata. The phone's scoped capability is encrypted with Android Keystore and excluded from reports. Synthetic transport tests are explicitly labelled and must not be counted as model-quality results.
 
-## Parallel work and monitoring
+If a reservation ends, download its latest ZIP to the next device, use **Import previous report ZIP**, and resume the unfinished batch. Original answer/device provenance is preserved. A new device needs model downloads again. Keep a local ZIP backup when possible, especially if uploads are pending.
 
-Install Python dependencies and log in to create a repository:
+## Server and monitoring
+
+The CPU-only upload relay is deployed on h100-eliomar. See [server/API.md](server/API.md) and [server/DEPLOYMENT.md](server/DEPLOYMENT.md) for its protocol, quotas, tests, credential renewal and operator commands. Its API, HF worker and tunnel run separately from the Claude implementation agent.
+
+The initial HTTPS ingress uses a **temporary Cloudflare quick tunnel**. The server publishes its current verified URL to the HF index. The APK reads `relay-endpoint.json` from this GitHub repository, then follows the HF discovery document while checking the pinned service identity before sending a session capability. Tunnel changes can therefore be discovered without rebuilding APKs. If the VM, tunnel or HF index is unavailable, local checkpoints remain queued and retry. The server credential currently expires November 26, 2026 and must be renewed by the operator; participants do not manage it.
+
+For a local archive of one or several public session reports, the optional watcher verifies ZIP checksums at immutable HF commits:
 
 ```sh
 python -m pip install -r scripts/requirements-monitor.txt
-hf auth login
-python scripts/create-hf-session.py --batch 1 --device 'Galaxy S25 FE / Exynos 2400' --manifest reports/my-session.json
-```
-
-The helper creates a public session repository and prints its URL. It does not mint a token for the phone; create the repository-scoped token through HF settings. `--private` creates a private session instead.
-
-Anyone can monitor public sessions without an HF login:
-
-```sh
 python scripts/watch-hf-benchmark.py \
-  --repository alice/session-one \
-  --repository bob/session-two \
+  --repository vinyteles/SESSION-DATASET-NAME \
   --hours 24 --output reports/hf-monitor
 ```
 
-Alternatively, use `--sessions-file sessions.local.json` containing a JSON list of repository names or session manifest objects. The watcher reads progress and ZIP at the same immutable Hub commit, verifies the ZIP checksum, and saves per-session progress/events/reports locally. It labels stale updates, ignores synthetic runs by default, and does not send chat notifications. The watcher needs its computer running; phone uploads work independently of it.
+Repeat `--repository` for several sessions or use `--sessions-file` with a JSON list of repository names/manifest objects. Public monitoring requires no HF login. It records progress and stale updates locally and does not send chat notifications. Phone/server uploads work independently of the watcher.
 
-Assign batches rather than accidentally repeating the same work. Keep timings separate by **phone, SoC, RAM, Android version, model hash, runtime version, prompt hash, thermals, and engine reuse**. Parallel sessions increase coverage; they do not make different hardware directly comparable. The four variants of a base question are related observations.
+Assign batches to colleagues to avoid accidental duplicate work. Keep timings separate by **phone, SoC, RAM, Android version, model hash, runtime version, prompt hash, thermals and engine reuse**. Parallel sessions increase coverage; different hardware is not directly comparable. The four variants of one base question are related observations.
+
+The older `scripts/create-hf-session.py` helper remains available for manually managed datasets; the 2.2 APKs use automatic relay sessions.
 
 ## Protocol
 
@@ -100,7 +99,7 @@ Requirements: JDK 17, Android SDK 36, NDK 27.1.12297006, CMake 3.22.1, and Git. 
 ./scripts/build-batch-apks.sh
 ```
 
-The five ARM64 APKs and checksums appear in `artifacts/batches-2.1/`. Build one preset with `./gradlew -PbenchmarkProfile=1 :app:assembleRelease`. A normal debug build supports x86_64 for emulator tests as well as ARM64.
+The five ARM64 APKs and checksums appear in `artifacts/batches-2.2/`. Build one preset with `./gradlew -PbenchmarkProfile=1 :app:assembleRelease`. A normal debug build supports x86_64 for emulator tests as well as ARM64.
 
 ```sh
 ./gradlew -PbenchmarkProfile=1 :app:assembleDebug :app:assembleDebugAndroidTest :app:lintRelease
