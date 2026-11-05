@@ -1,0 +1,223 @@
+"""API behavior: registration idempotency, isolation, intake validation, limits and the public feed."""
+
+import hashlib
+import json
+import os
+import secrets
+import threading
+import uuid
+
+from starlette.testclient import TestClient
+
+from server.api import create_app
+from server.store import Store
+from server.tests.conftest import (
+    make_settings,
+    make_zip,
+    register,
+    report_document,
+    upload,
+)
+
+
+def test_health_and_ready(client, store):
+    assert client.get("/v1/health").json()["service"] == "mobilebench-upload-relay"
+    response = client.get("/v1/ready")
+    assert response.status_code == 503 and response.json()["checks"]["workerAlive"] is False
+    store.set_state("worker", {"heartbeatAtMs": 10**13, "credentialError": None})
+    assert client.get("/v1/ready").status_code == 200
+    store.set_state("worker", {"heartbeatAtMs": 10**13, "credentialError": "Hub HTTP 401"})
+    assert client.get("/v1/ready").json()["checks"]["hubCredential"] is False
+
+
+def test_service_instance_id_persists_across_restart(settings, store):
+    first = TestClient(create_app(settings, store)).get("/v1/health").json()["serviceInstanceId"]
+    assert first.startswith("mbr_") and len(first) == 36
+    restarted = TestClient(create_app(settings, Store(settings.database_path)))
+    assert restarted.get("/v1/health").json()["serviceInstanceId"] == first
+
+
+def test_registration_is_idempotent_and_server_owned(client):
+    installation = str(uuid.uuid4())
+    first, secret = register(client, batch=2, purpose="benchmark", installation=installation)
+    assert first["created"] is True
+    assert first["repository"].startswith("vinyteles/mobilebench-relay-") and "-b2-" in first["repository"]
+    again, _ = register(client, batch=2, purpose="benchmark", secret=secret, installation=installation)
+    assert again["created"] is False and again["sessionId"] == first["sessionId"]
+    assert again["repository"] == first["repository"]
+    assert secret not in json.dumps(first)
+    # Same secret for different parameters is a conflict, not a second repository.
+    body = {"sessionSecret": secret, "installationId": installation, "batch": 3, "appVersion": "2.2"}
+    assert client.post("/v1/sessions", json=body).status_code == 409
+
+
+def test_same_installation_can_hold_several_sessions(client):
+    installation = str(uuid.uuid4())
+    one, _ = register(client, batch=1, installation=installation)
+    two, _ = register(client, batch=1, installation=installation)
+    assert one["sessionId"] != two["sessionId"] and one["repository"] != two["repository"]
+
+
+def test_registration_rejects_weak_or_malformed_input(client):
+    good = {"sessionSecret": secrets.token_urlsafe(32), "installationId": str(uuid.uuid4()), "batch": 1, "appVersion": "2.2"}
+    for field, value in [("sessionSecret", "short"), ("installationId", "not-a-uuid"), ("batch", 9), ("batch", True),
+                         ("appVersion", "x" * 50), ("purpose", "other")]:
+        response = client.post("/v1/sessions", json=dict(good, **{field: value}))
+        assert response.status_code == 400, field
+    assert client.post("/v1/sessions", content=b"[]").status_code == 400
+    assert client.post("/v1/sessions", content=b"x" * 20000).status_code == 413
+
+
+def test_registration_rate_limits(tmp_path):
+    settings = make_settings(tmp_path, registrations_per_ip_per_hour=2)
+    client = TestClient(create_app(settings, Store(settings.database_path)))
+    register(client)
+    register(client)
+    body = {"sessionSecret": secrets.token_urlsafe(32), "installationId": str(uuid.uuid4()), "batch": 1, "appVersion": "2.2"}
+    response = client.post("/v1/sessions", json=body)
+    assert response.status_code == 429 and int(response.headers["Retry-After"]) > 0
+    assert response.json()["error"]["retryable"] is True
+
+
+def test_global_daily_registration_quota(tmp_path):
+    settings = make_settings(tmp_path, registrations_per_day=1)
+    client = TestClient(create_app(settings, Store(settings.database_path)))
+    register(client)
+    body = {"sessionSecret": secrets.token_urlsafe(32), "installationId": str(uuid.uuid4()), "batch": 1, "appVersion": "2.2"}
+    assert client.post("/v1/sessions", json=body).json()["error"]["code"] == "registration_quota"
+
+
+def test_forwarded_address_trusted_only_from_configured_proxy(tmp_path):
+    settings = make_settings(tmp_path, registrations_per_ip_per_hour=1)
+    # TestClient's peer is "testclient", which is not a trusted proxy: rotating the header must not bypass limits.
+    client = TestClient(create_app(settings, Store(settings.database_path)))
+    for index in range(2):
+        body = {"sessionSecret": secrets.token_urlsafe(32), "installationId": str(uuid.uuid4()), "batch": 1, "appVersion": "2.2"}
+        response = client.post("/v1/sessions", json=body, headers={"CF-Connecting-IP": f"203.0.113.{index}"})
+    assert response.status_code == 429
+
+
+def test_forwarded_address_used_from_trusted_proxy(tmp_path):
+    settings = make_settings(tmp_path, registrations_per_ip_per_hour=1)
+    client = TestClient(create_app(settings, Store(settings.database_path)), client=("127.0.0.1", 5000))
+    for index in range(2):
+        body = {"sessionSecret": secrets.token_urlsafe(32), "installationId": str(uuid.uuid4()), "batch": 1, "appVersion": "2.2"}
+        response = client.post("/v1/sessions", json=body, headers={"CF-Connecting-IP": f"203.0.113.{index}"})
+        assert response.status_code == 201
+
+
+def test_upload_accept_and_duplicate(client):
+    session, secret = register(client)
+    data = make_zip()
+    response = upload(client, session, secret, data, created_at_ms=1793850219685)
+    assert response.status_code == 202, response.text
+    accepted = response.json()
+    assert accepted["state"] == "accepted" and accepted["sha256"] == hashlib.sha256(data).hexdigest()
+    assert accepted["cloudRunId"].startswith("bench120-1-")
+    again = upload(client, session, secret, data, created_at_ms=1793850219685)
+    assert again.status_code == 200 and again.json()["duplicate"] is True
+    assert again.json()["uploadId"] == accepted["uploadId"]
+    status = client.get(f"/v1/sessions/{session['sessionId']}", headers={"Authorization": f"Bearer {secret}"}).json()
+    assert status["sync"]["state"] == "pending" and status["sync"]["pendingUploads"] == 1
+    detail = client.get(accepted["statusUrl"], headers={"Authorization": f"Bearer {secret}"})
+    assert detail.json()["state"] == "accepted"
+
+
+def test_session_isolation(client):
+    alice, alice_secret = register(client)
+    bob, bob_secret = register(client)
+    data = make_zip()
+    assert upload(client, alice, bob_secret, data).status_code == 401
+    assert upload(client, alice, "", data).status_code == 401
+    assert client.get(f"/v1/sessions/{alice['sessionId']}", headers={"Authorization": f"Bearer {bob_secret}"}).status_code == 401
+    assert client.get(f"/v1/sessions/{alice['sessionId']}").status_code == 401
+    unknown = dict(alice, sessionId="s_" + "0" * 16)
+    assert upload(client, unknown, alice_secret, data).status_code == 404
+    accepted = upload(client, alice, alice_secret, data).json()
+    path = accepted["statusUrl"].replace(alice["sessionId"], bob["sessionId"])
+    assert client.get(path, headers={"Authorization": f"Bearer {bob_secret}"}).status_code == 404
+
+
+def test_upload_rejections(tmp_path):
+    settings = make_settings(tmp_path, max_upload_bytes=300_000)
+    client = TestClient(create_app(settings, Store(settings.database_path)))
+    session, secret = register(client)
+    data = make_zip()
+    assert upload(client, session, secret, data, sha="0" * 64).json()["error"]["code"] == "checksum_mismatch"
+    assert upload(client, session, secret, b"junk").status_code == 422
+    big = make_zip(extra={"big.log": os.urandom(200_000)})
+    response = upload(client, session, secret, big)
+    assert response.status_code == 413
+    bad_type = client.post(f"/v1/sessions/{session['sessionId']}/checkpoints", content=data,
+                           headers={"Authorization": f"Bearer {secret}", "Content-Type": "text/plain",
+                                    "X-Content-SHA256": hashlib.sha256(data).hexdigest()})
+    assert bad_type.status_code == 415
+    assert upload(client, session, secret, data, kind="configuration").status_code == 400
+    assert upload(client, session, secret, data, kind="configuration", configuration="../../x").status_code == 400
+    response = upload(client, session, secret, data, kind="configuration", configuration="gemma-int8-cpu-replay")
+    assert response.json()["error"]["code"] == "configuration_not_in_report"
+    # Nothing rejected stays in the spool.
+    assert not [p for p in settings.spool_dir.rglob("*") if p.is_file()]
+
+
+def test_session_upload_rate_limit(tmp_path):
+    settings = make_settings(tmp_path, uploads_per_session_per_hour=2)
+    client = TestClient(create_app(settings, Store(settings.database_path)))
+    session, secret = register(client)
+    for answers in (1, 2):
+        assert upload(client, session, secret, make_zip(report_document(answers={"gemma-mixed48-gpu-replay": answers}))).status_code == 202
+    response = upload(client, session, secret, make_zip(report_document(answers={"gemma-mixed48-gpu-replay": 3})))
+    assert response.status_code == 429 and "Retry-After" in response.headers
+
+
+def test_pending_spool_quota(tmp_path):
+    settings = make_settings(tmp_path, max_pending_bytes_per_session=400_000, max_upload_bytes=300_000)
+    client = TestClient(create_app(settings, Store(settings.database_path)))
+    session, secret = register(client)
+    first = make_zip(report_document(answers={"gemma-mixed48-gpu-replay": 1}))
+    assert len(first) < 300_000
+    assert upload(client, session, secret, first).status_code == 202
+    response = upload(client, session, secret, make_zip(report_document(answers={"gemma-mixed48-gpu-replay": 2})))
+    assert response.status_code == 507 and response.json()["error"]["code"] == "session_spool_full"
+
+
+def test_run_quota(tmp_path):
+    settings = make_settings(tmp_path, max_runs_per_session=1)
+    client = TestClient(create_app(settings, Store(settings.database_path)))
+    session, secret = register(client)
+    assert upload(client, session, secret, make_zip(report_document(run_id="run-a"))).status_code == 202
+    assert upload(client, session, secret, make_zip(report_document(run_id="run-b"))).status_code == 409
+
+
+def test_public_feed_has_no_capabilities(client):
+    installation = str(uuid.uuid4())
+    session, secret = register(client, installation=installation)
+    upload(client, session, secret, make_zip())
+    feed = client.get("/v1/public/sessions")
+    text = feed.text
+    assert secret not in text and installation not in text and "secret" not in text.lower()
+    entry = feed.json()["sessions"][0]
+    assert entry["repositoryUrl"].startswith("https://huggingface.co/datasets/vinyteles/mobilebench-relay-test-")
+    assert entry["latest"]["clientReported"] is True and entry["latest"]["smokeTest"] is True
+    page = client.get("/")
+    assert page.status_code == 200 and session["repository"] in page.text and secret not in page.text
+
+
+def test_concurrent_independent_sessions(settings, store):
+    app = create_app(settings, store)
+    results = []
+
+    def participant(index: int) -> None:
+        with TestClient(app) as client:
+            session, secret = register(client, batch=1 + index % 5)
+            for answers in range(1, 4):
+                report = report_document(run_id=f"run-{index}", answers={"gemma-mixed48-gpu-replay": answers})
+                results.append(upload(client, session, secret, make_zip(report)).status_code)
+
+    threads = [threading.Thread(target=participant, args=(index,)) for index in range(6)]
+    for thread in threads:
+        thread.start()
+    for thread in threads:
+        thread.join()
+    assert results.count(202) == 18
+    assert store.count_sessions() == 6

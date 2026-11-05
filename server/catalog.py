@@ -1,0 +1,48 @@
+"""Benchmark constants mirrored from the Android app (ModelCatalog.kt, ReportExporter.kt).
+
+tests/test_catalog_sync.py parses the Kotlin sources so this copy cannot drift silently.
+"""
+
+import re
+
+PROTOCOL_ID = "mobile-rag-replay-120-v2"
+FIXTURE_SHA256 = "e43daa8d6887b372ad05a729c9dd53488fd29023bd228836c1e98060817c3cc4"
+QUESTION_COUNT = 120
+
+# Configuration id -> pinned model SHA-256, in ModelCatalog.BENCHMARK_CONFIGS order.
+CONFIGURATION_MODELS = {
+    "gemma-mixed48-gpu-replay": "63a7374c71b404eb4f8cf8322beca2bc862061cba29adb368131c73e198f59e1",
+    "lfm3-q4km-vulkan-replay": "3793e1e6e2266919d6e015287221b41100175a98eddaba92e111aed3b05c93c4",
+    "lfm3-mixed4-litert-gpu-replay": "327486bf01d0b1eefd727b7aadec8627a2b8db143349262857ac98403109d72b",
+    "gemma-base-mixed248-gpu-replay": "181938105e0eefd105961417e8da75903eacda102c4fce9ce90f50b97139a63c",
+    "gemma-base-q8-vulkan-replay": "605d3c2647d7c58c1e4b5375ccb5702acf94c2611b4c8d4877812f8fdd32d053",
+    "lfm3-q4km-cpu-replay": "3793e1e6e2266919d6e015287221b41100175a98eddaba92e111aed3b05c93c4",
+    "gemma-int8-cpu-replay": "1a4a87c0f00b191cc4136f783e17640cc5ab58fc4c2a0d3ec21348c0b98d2e54",
+    "gemma-mixed48-cpu-replay": "63a7374c71b404eb4f8cf8322beca2bc862061cba29adb368131c73e198f59e1",
+    "gemma-base-mixed248-cpu-replay": "181938105e0eefd105961417e8da75903eacda102c4fce9ce90f50b97139a63c",
+}
+
+# APK preset number -> batch label written to progress.json (BENCHMARK_BATCH_NAME).
+BATCH_NAMES = {
+    1: "Batch 1 · Previously tested GPUs",
+    2: "Batch 2 · New LiteRT GPUs",
+    3: "Batch 3 · Original Gemma",
+    4: "Batch 4 · LFM3 CPU",
+    5: "Batch 5 · Energy CPU",
+}
+
+# Fixed members written by ReportExporter.archive(); raw native logs are matched separately.
+FIXED_MEMBERS = {
+    "report.json",
+    "summary.txt",
+    "rag-replay.json",
+    "comparisons.jsonl",
+    "answers-and-context.txt",
+    "native-provenance.json",
+    "lfm3-chat-template.jinja",
+    "gemma4-chat-template.jinja",
+}
+LOG_MEMBER = re.compile(r"[A-Za-z0-9_.-]{1,128}\.(log|trace)")
+
+# Queue states after which the phone stops producing checkpoints for that run.
+TERMINAL_QUEUE_STATES = {"completed", "stopped", "error"}
