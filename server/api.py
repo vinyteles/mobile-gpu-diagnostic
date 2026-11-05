@@ -36,6 +36,7 @@ from server import (
     SERVICE_NAME,
 )
 from server.catalog import (
+    BATCH_CONFIGURATIONS,
     BATCH_NAMES,
     CONFIGURATION_MODELS,
 )
@@ -45,6 +46,7 @@ from server.config import (
     load_settings,
 )
 from server.feed import (
+    expected_answers,
     progress_summary,
     public_feed,
     repository_url,
@@ -53,10 +55,12 @@ from server.feed import (
 from server.store import (
     DuplicateRow,
     Store,
+    encode_questions,
     now_ms,
 )
 from server.validation import (
     ReportRejected,
+    assess_completion,
     build_progress,
     inspect_archive,
 )
@@ -248,7 +252,11 @@ class Relay:
     # Checkpoints -----------------------------------------------------------------------------
 
     async def submit_checkpoint(self, request: Request) -> JSONResponse:
-        """Receive a raw report ZIP, validate it, persist it durably, then acknowledge."""
+        """Receive a raw report ZIP, validate it, persist it durably, then acknowledge.
+
+        Partial reports are kept as "stored" (relay disk only). Reports whose assigned configurations
+        all have 120 completed fixture questions become "accepted" and are queued for HF publication.
+        """
         # 1. Authenticate and check headers before reading the body.
         session = self.authenticate(request)
         kind, configuration, created_at, expected_sha, app_version = parse_checkpoint_headers(request)
@@ -286,7 +294,10 @@ class Relay:
             if cloud_run_id not in runs and len(runs) >= self.limits.max_runs_per_session:
                 raise ApiError(409, "run_quota", "This session already holds the maximum number of runs; register a new session.")
 
-            # 6. Build progress.json server-side and persist blob + row before acknowledging.
+            # 6. Decide publication eligibility from the report contents, never from client headers.
+            completion = assess_completion(summary.completed_questions, session["batch"])
+
+            # 7. Build progress.json server-side and persist blob + row before acknowledging.
             received = now_ms()
             upload_id = "u_" + secrets.token_hex(10)
             relay = {
@@ -316,8 +327,12 @@ class Relay:
                 "terminal": int(summary.terminal),
                 "smoke_test": int(summary.smoke_test),
                 "progress_json": json.dumps(progress, ensure_ascii=False),
+                "saved_answers": completion.saved_answers,
+                "required_answers": completion.required_answers,
+                "complete": int(completion.complete),
+                "completed_questions": encode_questions(summary.completed_questions),
                 "blob_path": str(blob),
-                "state": "accepted",
+                "state": "accepted" if completion.complete else "stored",
             }
             try:
                 self.store.insert_upload(row)
@@ -325,8 +340,8 @@ class Relay:
                 blob.unlink(missing_ok=True)
                 duplicate = self.store.find_upload(session["id"], actual_sha, kind, configuration)
                 return JSONResponse(self.upload_document(session, duplicate, duplicate=True))
-            LOGGER.info("accepted upload %s session %s kind %s run %s answers %d bytes %d", upload_id, session["id"], kind,
-                        cloud_run_id, summary.completed_answers, size)
+            LOGGER.info("%s upload %s session %s kind %s run %s saved %d/%d bytes %d", row["state"], upload_id,
+                        session["id"], kind, cloud_run_id, completion.saved_answers, completion.required_answers, size)
             return JSONResponse(self.upload_document(session, self.store.upload(session["id"], upload_id), duplicate=False),
                                 status_code=202)
         except ReportRejected as error:
@@ -403,6 +418,7 @@ class Relay:
             "repositoryCreated": bool(session["repo_created"]),
             "batch": session["batch"],
             "batchName": BATCH_NAMES[session["batch"]],
+            "assignedConfigurations": list(BATCH_CONFIGURATIONS[session["batch"]]),
             "purpose": session["purpose"],
             "createdAtMs": session["created_at_ms"],
             "statusUrl": base,
@@ -410,7 +426,10 @@ class Relay:
             "sync": {
                 "state": sync_state(sync),
                 "pendingUploads": sync["pending"],
+                "storedUploads": sync["stored"],
                 "acceptedUploads": sync["total"],
+                "receivedAnswers": sync["received_answers"],
+                "expectedAnswers": expected_answers(session["batch"]),
                 "oldestPendingReceivedAtMs": sync["oldest_pending_received_at_ms"],
                 "lastPublishedAtMs": session["last_publish_at_ms"],
                 "lastCommit": session["last_commit"],
@@ -439,6 +458,9 @@ class Relay:
             "sizeBytes": upload["size_bytes"],
             "cloudRunId": upload["cloud_run_id"],
             "completedAnswers": upload["completed_answers"],
+            "savedAnswers": upload["saved_answers"],
+            "requiredAnswers": upload["required_answers"],
+            "complete": bool(upload["complete"]),
             "clientCreatedAtMs": upload["client_created_at_ms"],
             "receivedAtMs": upload["received_at_ms"],
             "publishedAtMs": upload["published_at_ms"],
@@ -610,7 +632,7 @@ def render_status_page(sessions: list[dict]) -> str:
                 item["batchName"],
                 item["purpose"] + (" (synthetic report)" if latest.get("smokeTest") else ""),
                 f"{device.get('manufacturer', '')} {device.get('model', '')} {device.get('socModel', '')}".strip(),
-                latest.get("completedAnswers", ""),
+                f"{latest['savedAnswers']}/{latest['requiredAnswers']}" if latest else "",
                 (latest.get("queue") or {}).get("status", ""),
                 item["sync"]["state"] + (" (retrying)" if item["sync"]["retrying"] else ""),
             )) + f'<td><a href="{html.escape(item["repositoryUrl"])}">{html.escape(item["repository"])}</a></td></tr>'
@@ -620,8 +642,10 @@ def render_status_page(sessions: list[dict]) -> str:
         "<title>Mobile benchmark relay</title><style>body{font-family:sans-serif;margin:16px}"
         "table{border-collapse:collapse;font-size:14px}td,th{border:1px solid #ccc;padding:4px 6px;text-align:left}</style>"
         "</head><body><h1>Mobile benchmark relay</h1><p>Sessions uploaded through this relay. Device fields and counts are "
-        "reported by the app. JSON: <a href='/v1/public/sessions'>/v1/public/sessions</a>.</p><table><tr><th>Created (UTC)</th>"
-        "<th>Batch</th><th>Purpose</th><th>Device (reported)</th><th>Answers</th><th>Queue</th><th>Sync</th>"
+        "reported by the app. Partial reports stay on the relay (<i>collecting</i>); a report is published to HF "
+        "only when every assigned question is completed. JSON: <a href='/v1/public/sessions'>/v1/public/sessions</a>."
+        "</p><table><tr><th>Created (UTC)</th>"
+        "<th>Batch</th><th>Purpose</th><th>Device (reported)</th><th>Saved answers</th><th>Queue</th><th>Sync</th>"
         "<th>HF dataset</th></tr>" + "".join(rows) + "</table></body></html>"
     )
 

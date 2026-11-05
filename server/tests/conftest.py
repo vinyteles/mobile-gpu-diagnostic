@@ -2,22 +2,14 @@
 
 import dataclasses
 import hashlib
-import io
-import json
 import secrets
 import uuid
-import zipfile
 from pathlib import Path
 
 import pytest
 from starlette.testclient import TestClient
 
 from server.api import create_app
-from server.catalog import (
-    CONFIGURATION_MODELS,
-    FIXTURE_SHA256,
-    PROTOCOL_ID,
-)
 from server.config import (
     Limits,
     Settings,
@@ -27,9 +19,16 @@ from server.hub import (
     HubError,
 )
 from server.store import Store
+from server.synthetic import (
+    FIXTURE_PATH,
+    fixture_question_ids,
+    synthetic_report,
+    synthetic_zip,
+)
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
-FIXTURE = (REPO_ROOT / "app/src/main/assets/rag-replay.json").read_bytes()
+FIXTURE = FIXTURE_PATH.read_bytes()
+QUESTION_IDS = fixture_question_ids(FIXTURE)
 EXAMPLE_ZIP = Path.home() / ".local/state/mobile-upload-agent/examples/report.zip"
 
 
@@ -104,7 +103,7 @@ def report_document(run_id: str = "bench120-1", answers: dict | None = None, que
 
     Args:
         run_id: metadata.runId.
-        answers: configuration id -> number of completed answers (empty list when 0).
+        answers: configuration id -> number of completed answers (first N fixture questions) or positions.
         queue_status: queue.status.
         smoke: metadata.smokeTest.
         metadata_overrides: Replace metadata fields (e.g. protocolId).
@@ -112,54 +111,13 @@ def report_document(run_id: str = "bench120-1", answers: dict | None = None, que
         report dict.
     """
     answers = {"gemma-mixed48-gpu-replay": 3} if answers is None else answers
-    results = []
-    for configuration, count in answers.items():
-        results.append({
-            "id": configuration,
-            "modelSha256": CONFIGURATION_MODELS.get(configuration, "0" * 64),
-            "status": "completed" if count == 120 else "running",
-            "phase": "generating",
-            "totalQuestions": 120,
-            "currentQuestion": count,
-            "answers": [{"questionId": f"q{i:03d}", "status": "completed", "answer": "Resposta sintética."} for i in range(count)],
-        })
-    metadata = {
-        "runId": run_id,
-        "protocolId": PROTOCOL_ID,
-        "fixtureSha256": FIXTURE_SHA256,
-        "smokeTest": smoke,
-        "device": {"manufacturer": "Test", "model": "Synthetic", "socModel": "none"},
-        "executionAttempts": [{"appVersion": "2.2"}],
-    }
-    metadata.update(metadata_overrides)
-    return {"metadata": metadata, "queue": {"status": queue_status, "stage": "benchmark"}, "results": results,
-            "preparation": None}
+    return synthetic_report(run_id, answers, QUESTION_IDS, queue_status, smoke, **metadata_overrides)
 
 
 def make_zip(report: dict | None = None, extra: dict | None = None, fixture: bytes = FIXTURE,
              skip: tuple = ()) -> bytes:
-    """Build a report ZIP like ReportExporter.archive().
-
-    Args:
-        report: report.json content (default report_document()).
-        extra: Additional member name -> bytes.
-        fixture: rag-replay.json bytes.
-        skip: Member names to omit.
-    Returns:
-        ZIP bytes.
-    """
-    members = {
-        "report.json": json.dumps(report or report_document()).encode(),
-        "summary.txt": b"SMOKE TEST: no model inference\n",
-        "rag-replay.json": fixture,
-    }
-    members.update(extra or {})
-    buffer = io.BytesIO()
-    with zipfile.ZipFile(buffer, "w", zipfile.ZIP_DEFLATED) as archive:
-        for name, data in members.items():
-            if name not in skip:
-                archive.writestr(name, data)
-    return buffer.getvalue()
+    """Build a report ZIP like ReportExporter.archive() (default report: report_document())."""
+    return synthetic_zip(report or report_document(), fixture, extra, skip)
 
 
 def register(client: TestClient, batch: int = 1, purpose: str = "synthetic-test", secret: str | None = None,

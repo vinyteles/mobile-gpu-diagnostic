@@ -7,6 +7,7 @@ src=$relay_home/src
 session=mobilebench-relay
 environment="env MOBILEBENCH_HOME=$relay_home HF_HOME=$relay_home/hf-home HF_HUB_DISABLE_TELEMETRY=1 PYTHONUNBUFFERED=1"
 if [ -f "$relay_home/config.toml" ]; then environment="$environment MOBILEBENCH_CONFIG=$relay_home/config.toml"; fi
+if [ -n "${MOBILEBENCH_ENDPOINT_COPY:-}" ]; then environment="$environment MOBILEBENCH_ENDPOINT_COPY=$MOBILEBENCH_ENDPOINT_COPY"; fi
 supervise="$src/server/deploy/supervise.sh"
 
 # Create the session and any missing window; running windows are left untouched.

@@ -2,11 +2,18 @@
 
 Tables:
     sessions      one row per registered benchmark session and its server-owned HF repository
-    uploads       one row per accepted checkpoint ZIP; state accepted -> published | superseded
+    uploads       one row per accepted checkpoint ZIP (see upload states below)
     publications  newest published snapshot per destination slot, so late uploads never overwrite newer data
     service_state small key/value facts (worker heartbeat, credential status, index digest)
 
+Upload states:
+    stored      partial report (assigned configurations not yet 120/120); kept on disk, never sent to HF
+    accepted    complete report waiting for HF publication
+    published   committed to HF (blob released)
+    superseded  every completed question is also in a newer retained snapshot of the run (blob released)
+
 Order keys compare (client_created_at_ms, completed_answers, received_at_ms) tuples.
+completed_questions holds {"<configuration id>": "<hex bitmap of completed fixture positions>"}.
 """
 
 import json
@@ -48,6 +55,10 @@ CREATE TABLE IF NOT EXISTS uploads (
     terminal INTEGER NOT NULL,
     smoke_test INTEGER NOT NULL,
     progress_json TEXT NOT NULL,
+    saved_answers INTEGER NOT NULL DEFAULT 0,
+    required_answers INTEGER NOT NULL DEFAULT 0,
+    complete INTEGER NOT NULL DEFAULT 0,
+    completed_questions TEXT NOT NULL DEFAULT '{}',
     blob_path TEXT,
     state TEXT NOT NULL,
     commit_oid TEXT,
@@ -72,6 +83,9 @@ CREATE TABLE IF NOT EXISTS service_state (
     updated_at_ms INTEGER NOT NULL
 );
 """
+# States whose spool blob must be kept, and states whose content is still authoritative.
+KEPT_STATES = ("stored", "accepted")
+RETAINED_STATES = ("stored", "accepted", "published")
 
 
 def now_ms() -> int:
@@ -88,6 +102,28 @@ def order_key(upload: sqlite3.Row | dict) -> tuple[int, int, int]:
         Tuple compared lexicographically; larger is newer.
     """
     return (upload["client_created_at_ms"], upload["completed_answers"], upload["received_at_ms"])
+
+
+def encode_questions(completed_questions: dict[str, int]) -> str:
+    """Serialize configuration -> completed-question bitmap for the completed_questions column.
+
+    Args:
+        completed_questions: e.g. {"gemma-mixed48-gpu-replay": 7} (questions 0, 1 and 2 completed).
+    Returns:
+        JSON text such as '{"gemma-mixed48-gpu-replay": "7"}'.
+    """
+    return json.dumps({configuration: format(bitmap, "x") for configuration, bitmap in completed_questions.items()},
+                      sort_keys=True)
+
+
+def decode_questions(upload: sqlite3.Row | dict) -> dict[str, int]:
+    """Return the configuration -> completed-question bitmap of an upload row."""
+    return {configuration: int(bitmap, 16) for configuration, bitmap in json.loads(upload["completed_questions"]).items()}
+
+
+def contains_questions(newer: dict[str, int], older: dict[str, int]) -> bool:
+    """Return whether every completed (configuration, question) of `older` is also completed in `newer`."""
+    return all(bitmap & ~newer.get(configuration, 0) == 0 for configuration, bitmap in older.items())
 
 
 class DuplicateRow(Exception):
@@ -212,35 +248,41 @@ class Store:
         return row[0], row[1]
 
     def pending_bytes(self, session_id: str | None = None) -> int:
-        """Return spooled bytes not yet published, for one session or service-wide."""
+        """Return spooled bytes still kept (stored partials and unpublished complete reports)."""
         if session_id is None:
-            return self.query("SELECT COALESCE(SUM(size_bytes), 0) FROM uploads WHERE state = 'accepted'")[0][0]
+            return self.query(
+                "SELECT COALESCE(SUM(size_bytes), 0) FROM uploads WHERE state IN ('stored', 'accepted')"
+            )[0][0]
         return self.query(
-            "SELECT COALESCE(SUM(size_bytes), 0) FROM uploads WHERE state = 'accepted' AND session_id = ?", (session_id,)
+            "SELECT COALESCE(SUM(size_bytes), 0) FROM uploads WHERE state IN ('stored', 'accepted') AND session_id = ?",
+            (session_id,),
         )[0][0]
 
     def run_ids(self, session_id: str) -> set[str]:
         """Return the distinct cloud run ids already accepted for a session."""
         return {row[0] for row in self.query("SELECT DISTINCT cloud_run_id FROM uploads WHERE session_id = ?", (session_id,))}
 
-    def pending_uploads(self, session_id: str) -> list[sqlite3.Row]:
-        """Return a session's unpublished uploads, oldest snapshot first."""
-        rows = self.query("SELECT * FROM uploads WHERE session_id = ? AND state = 'accepted'", (session_id,))
+    def retained_uploads(self, session_id: str) -> list[sqlite3.Row]:
+        """Return a session's stored, accepted and published uploads, oldest snapshot first."""
+        rows = self.query(
+            "SELECT * FROM uploads WHERE session_id = ? AND state IN ('stored', 'accepted', 'published')", (session_id,)
+        )
         return sorted(rows, key=order_key)
 
     def sessions_with_pending(self, at_ms: int) -> list[sqlite3.Row]:
-        """Return sessions that have pending uploads and are not in retry backoff."""
+        """Return sessions holding stored or accepted uploads that are not in retry backoff."""
         return self.query(
             "SELECT * FROM sessions WHERE next_attempt_at_ms <= ? AND id IN "
-            "(SELECT DISTINCT session_id FROM uploads WHERE state = 'accepted') ORDER BY next_attempt_at_ms",
+            "(SELECT DISTINCT session_id FROM uploads WHERE state IN ('stored', 'accepted')) ORDER BY next_attempt_at_ms",
             (at_ms,),
         )
 
     def mark_superseded(self, upload_ids: list[str]) -> None:
-        """Mark uploads whose content is covered by a newer snapshot of the same slot."""
+        """Mark stored/accepted uploads whose completed questions are all held by a newer retained snapshot."""
         with self.transaction() as connection:
             connection.executemany(
-                "UPDATE uploads SET state = 'superseded' WHERE id = ? AND state = 'accepted'", [(i,) for i in upload_ids]
+                "UPDATE uploads SET state = 'superseded' WHERE id = ? AND state IN ('stored', 'accepted')",
+                [(i,) for i in upload_ids],
             )
 
     def publications(self, session_id: str) -> dict[str, tuple[int, int, int]]:
@@ -286,11 +328,17 @@ class Store:
 
     def releasable_blobs(self) -> list[sqlite3.Row]:
         """Return published/superseded uploads whose spool blob still exists in the database."""
-        return self.query("SELECT id, blob_path FROM uploads WHERE state != 'accepted' AND blob_path IS NOT NULL")
+        return self.query(
+            "SELECT id, blob_path FROM uploads WHERE state IN ('published', 'superseded') AND blob_path IS NOT NULL"
+        )
 
     def pending_blob_paths(self) -> set[str]:
-        """Return spool paths that must be kept because they are not yet published."""
-        return {row[0] for row in self.query("SELECT blob_path FROM uploads WHERE state = 'accepted' AND blob_path IS NOT NULL")}
+        """Return spool paths that must be kept: stored partials and unpublished complete reports."""
+        return {
+            row[0] for row in self.query(
+                "SELECT blob_path FROM uploads WHERE state IN ('stored', 'accepted') AND blob_path IS NOT NULL"
+            )
+        }
 
     # Status ----------------------------------------------------------------------------------
 
@@ -300,11 +348,15 @@ class Store:
         Args:
             session_id: Session id.
         Returns:
-            Counts, timestamps and latest accepted/published upload rows.
+            Counts (pending = complete awaiting HF, stored = retained partials), the newest run's
+            received (distinct completed, assigned) answers, timestamps and latest accepted/published rows.
         """
         pending = self.query(
             "SELECT COUNT(*), MIN(received_at_ms) FROM uploads WHERE session_id = ? AND state = 'accepted'", (session_id,)
         )[0]
+        counts = {row[0]: row[1] for row in self.query(
+            "SELECT state, COUNT(*) FROM uploads WHERE session_id = ? GROUP BY state", (session_id,)
+        )}
         latest_accepted = self.query(
             "SELECT * FROM uploads WHERE session_id = ? ORDER BY client_created_at_ms DESC, completed_answers DESC, "
             "received_at_ms DESC LIMIT 1",
@@ -315,8 +367,18 @@ class Store:
             (session_id,),
         )
         total = self.query("SELECT COUNT(*) FROM uploads WHERE session_id = ?", (session_id,))[0][0]
+        received = 0
+        if latest_accepted:
+            # Most distinct completed questions held for the newest run (any snapshot, including coalesced ones).
+            received = self.query(
+                "SELECT MAX(saved_answers) FROM uploads WHERE session_id = ? AND cloud_run_id = ?",
+                (session_id, latest_accepted[0]["cloud_run_id"]),
+            )[0][0]
         return {
+            "received_answers": received,
             "pending": pending[0],
+            "stored": counts.get("stored", 0),
+            "published": counts.get("published", 0),
             "oldest_pending_received_at_ms": pending[1],
             "total": total,
             "latest_accepted": latest_accepted[0] if latest_accepted else None,

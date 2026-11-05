@@ -40,6 +40,19 @@ BATCH_NAMES = {
     109: "Config 9 · Gemma 4 E2B-IT mobile CPU",
 }
 
+# Session `batch` -> configurations that must all reach 120 completed questions before HF publication.
+# Profiles 101..109 run exactly one configuration (CONFIGURATION_MODELS order); legacy groups 1..5
+# keep the pre-split Android BATCH_CONFIG_IDS.
+_IDS = list(CONFIGURATION_MODELS)
+BATCH_CONFIGURATIONS = {
+    1: (_IDS[0], _IDS[1]),
+    2: (_IDS[2], _IDS[3]),
+    3: (_IDS[4], _IDS[8]),
+    4: (_IDS[5],),
+    5: (_IDS[6], _IDS[7]),
+    **{101 + index: (configuration,) for index, configuration in enumerate(_IDS)},
+}
+
 # Fixed members written by ReportExporter.archive(); raw native logs are matched separately.
 FIXED_MEMBERS = {
     "report.json",

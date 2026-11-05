@@ -1,6 +1,9 @@
-"""Background publisher: moves accepted checkpoints from the spool to Hugging Face.
+"""Background publisher: moves complete checkpoints from the spool to Hugging Face.
 
 Run: python -m server.worker [--config path.toml]
+
+Only "accepted" uploads (every assigned configuration has all 120 fixture questions completed)
+are published. "stored" partial uploads stay on the relay disk; the worker only coalesces them.
 
 Each published snapshot writes its ZIP and its progress JSON (whose archiveSha256 is the
 ZIP's SHA-256) in one HF commit. Destination slots per session repository:
@@ -10,7 +13,8 @@ ZIP's SHA-256) in one HF commit. Destination slots per session repository:
     config:<run>:<id> -> runs/<run>/configurations/<id>.zip + <id>.json
 
 A slot is only written by a snapshot newer than what it already holds, so retried or late
-uploads cannot roll progress back. Routine checkpoints of one run are coalesced to the newest.
+uploads cannot roll progress back. A snapshot is superseded (and its blob released) only when a
+newer retained snapshot of the same run holds every one of its completed questions.
 """
 
 import argparse
@@ -44,6 +48,8 @@ from server.hub import (
 )
 from server.store import (
     Store,
+    contains_questions,
+    decode_questions,
     now_ms,
     order_key,
 )
@@ -111,17 +117,17 @@ class Publisher:
         self.store.set_state("worker", {"heartbeatAtMs": now_ms(), "credentialError": self.credential_error})
 
     def process_session(self, session_id: str) -> None:
-        """Coalesce and publish at most one snapshot of one session.
+        """Coalesce stored/accepted snapshots and publish at most one complete snapshot of one session.
 
         Args:
-            session_id: Session with pending uploads.
+            session_id: Session with stored or accepted uploads.
         """
         session = self.store.session(session_id)
         try:
-            # 1. Drop snapshots already covered by newer pending or published ones.
-            pending = self.store.pending_uploads(session_id)
+            # 1. Drop snapshots whose completed questions are all held by a newer retained one.
+            retained = self.store.retained_uploads(session_id)
             published = self.store.publications(session_id)
-            covered, job = select_work(pending, published)
+            covered, job = select_work(retained)
             if covered:
                 self.store.mark_superseded(covered)
                 self.release_blobs()
@@ -167,7 +173,8 @@ class Publisher:
 
         # 3. Commit, then record success before deleting the spooled blob.
         label = upload["configuration_id"] or ("final" if upload["terminal"] else "checkpoint")
-        message = f"Relay {upload['cloud_run_id']}: {label} ({upload['completed_answers']} answers)"
+        message = (f"Relay {upload['cloud_run_id']}: {label} complete "
+                   f"({upload['saved_answers']}/{upload['required_answers']} answers)")
         commit = self.hub.commit(session["repository"], files, message)
         if not session["repo_created"]:
             self.store.set_repo_created(session["id"])
@@ -237,43 +244,58 @@ class Publisher:
                 self.credential_error = str(error)
 
 
-def select_work(pending: list[sqlite3.Row], published: dict) -> tuple[list[str], sqlite3.Row | None]:
-    """Choose what to supersede and the next upload to publish for one session.
+def select_work(retained: list[sqlite3.Row]) -> tuple[list[str], sqlite3.Row | None]:
+    """Choose what to supersede and the next complete upload to publish for one session.
 
     Args:
-        pending: Accepted uploads, oldest snapshot first.
-        published: Slot -> order key of what HF already holds.
+        retained: Stored, accepted and published uploads, oldest snapshot first.
     Returns:
-        (ids covered by newer data, next upload or None). Configuration snapshots go first,
-        oldest first; otherwise the newest routine checkpoint.
+        (ids covered by newer retained data, next accepted upload or None). Configuration
+        snapshots go first, oldest first; otherwise the oldest uncovered routine checkpoint.
+        Stored (partial) uploads are never returned for publication.
     """
-    # 1. Newest pending key per run and per configuration slot.
-    newest_run = {}
-    newest_config = {}
-    for upload in pending:
-        newest_run[upload["cloud_run_id"]] = order_key(upload)
-        if upload["kind"] == "configuration":
-            newest_config[config_slot(upload)] = order_key(upload)
+    # 1. Decode completed-question bitmaps once.
+    questions = {upload["id"]: decode_questions(upload) for upload in retained}
 
-    # 2. A routine checkpoint is covered by any newer snapshot of its run (pending or published);
-    #    a configuration snapshot only by a newer snapshot of the same configuration slot.
+    # 2. Classify every unpublished upload as covered, or publishable when complete.
     covered = []
     configurations = []
     latest = []
-    for upload in pending:
-        key = order_key(upload)
-        if upload["kind"] == "configuration":
-            slot = config_slot(upload)
-            if key < newest_config[slot] or key <= published.get(slot, OLDEST):
-                covered.append(upload["id"])
-            else:
-                configurations.append(upload)
-        elif key < newest_run[upload["cloud_run_id"]] or key <= published.get(run_slot(upload), OLDEST):
+    for upload in retained:
+        if upload["state"] == "published":
+            continue
+        if is_covered(upload, retained, questions):
             covered.append(upload["id"])
-        else:
-            latest.append(upload)
+        elif upload["state"] == "accepted":
+            (configurations if upload["kind"] == "configuration" else latest).append(upload)
     job = configurations[0] if configurations else (latest[0] if latest else None)
     return covered, job
+
+
+def is_covered(upload: sqlite3.Row, retained: list[sqlite3.Row], questions: dict[str, dict[str, int]]) -> bool:
+    """Return whether another retained snapshot of the same run makes this upload redundant.
+
+    Args:
+        upload: Stored or accepted upload.
+        retained: Retained uploads of the session.
+        questions: Upload id -> completed-question bitmaps.
+    Returns:
+        True when some other snapshot holds every completed question of `upload` and is newer
+        (or, for a partial, is complete). A complete configuration snapshot is only covered by a
+        newer snapshot of the same configuration, so its configuration slot is still published.
+    """
+    for other in retained:
+        if other["id"] == upload["id"] or other["cloud_run_id"] != upload["cloud_run_id"]:
+            continue
+        if not contains_questions(questions[other["id"]], questions[upload["id"]]):
+            continue
+        newer = order_key(other) > order_key(upload)
+        if upload["state"] == "stored" and (newer or other["complete"]):
+            return True
+        same_slot = upload["kind"] == "latest" or other["configuration_id"] == upload["configuration_id"]
+        if upload["state"] == "accepted" and newer and same_slot:
+            return True
+    return False
 
 
 def publication_files(upload: sqlite3.Row, published: dict, blob: Path) -> tuple[dict[str, bytes | Path], list[str]]:
@@ -373,6 +395,8 @@ def dataset_card(session: sqlite3.Row) -> str:
            if synthetic else "")
         + f"- Batch: {BATCH_NAMES[session['batch']]}\n"
         "- Uploaded by the mobile benchmark APK through the upload relay; this repository is created and written by the relay.\n"
+        "- Only **complete** reports are published here: every assigned configuration has all 120 benchmark questions "
+        "completed. Partial checkpoints stay on the relay and are never published.\n"
         "- Device details and metrics are **reported by the client app** and are not authenticated hardware evidence.\n\n"
         "Layout: `latest.json`, `runs/<run>/progress.json`, `runs/<run>/latest.zip`, "
         "`runs/<run>/configurations/<configuration>.zip` (+ `.json`). Each progress JSON's `archiveSha256` "
@@ -386,7 +410,9 @@ def index_card(settings: Settings) -> str:
         "---\npretty_name: Mobile benchmark relay index\ntags:\n- mobilebench-relay\n---\n\n"
         "# Mobile benchmark relay index\n\n"
         f"- `sessions.json`: every relay session and its public dataset (`{settings.namespace}/{settings.repo_prefix}-*`).\n"
-        "  Device fields and counts are client-reported. Sessions with purpose `synthetic-test` are transport tests.\n"
+        "  It carries progress metadata only (saved/required answer counts, client-reported device fields). Answers and\n"
+        "  metrics reach a session dataset only once its report is complete (120/120 questions per assigned\n"
+        "  configuration). Device fields are client-reported. Sessions with purpose `synthetic-test` are transport tests.\n"
         "- `endpoint.json`: the currently verified relay URL. It is a temporary tunnel URL and can change.\n\n"
         f"Session repositories: {repository_url(settings.namespace + '/' + settings.repo_prefix + '-…')}\n"
     )

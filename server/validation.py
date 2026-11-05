@@ -2,7 +2,11 @@
 
 Example: a valid archive yields
     ReportSummary(local_run_id="bench120-1793850219685", smoke_test=False, completed_answers=37,
-                  configurations=[{"id": "gemma-mixed48-gpu-replay", "status": "running", ...}], ...)
+                  configurations=[{"id": "gemma-mixed48-gpu-replay", "status": "running", ...}],
+                  completed_questions={"gemma-mixed48-gpu-replay": 0x1f...}, ...)
+
+completed_questions maps each configuration to a bitmap of fixture question positions whose
+answer status is "completed": bit i set <=> questions[i].id of rag-replay.json was answered.
 """
 
 import dataclasses
@@ -13,6 +17,7 @@ import zipfile
 from pathlib import Path
 
 from server.catalog import (
+    BATCH_CONFIGURATIONS,
     CONFIGURATION_MODELS,
     FIXED_MEMBERS,
     FIXTURE_SHA256,
@@ -25,6 +30,8 @@ from server.config import Limits
 
 RUN_ID = re.compile(r"[A-Za-z0-9_-]{1,80}")
 MAX_DEVICE_JSON_BYTES = 32 * 1024
+# Fixture question id -> position, parsed once from the first verified rag-replay.json.
+_QUESTION_INDEX: dict[str, int] = {}
 
 
 class ReportRejected(Exception):
@@ -50,10 +57,24 @@ class ReportSummary:
     device: dict | None
     app_version: str | None
     uncompressed_bytes: int
+    completed_questions: dict[str, int] = dataclasses.field(default_factory=dict)
 
     @property
     def terminal(self) -> bool:
         return (self.queue or {}).get("status") in TERMINAL_QUEUE_STATES
+
+
+@dataclasses.dataclass(frozen=True)
+class Completion:
+    """How far a report is toward publication for one session's assigned configurations.
+
+    Example: a Config 1 session with 42 answered questions gives
+        Completion(saved_answers=42, required_answers=120, complete=False)
+    """
+
+    saved_answers: int
+    required_answers: int
+    complete: bool
 
 
 def inspect_archive(path: Path, limits: Limits) -> ReportSummary:
@@ -95,9 +116,43 @@ def inspect_archive(path: Path, limits: Limits) -> ReportSummary:
         raise ReportRejected("missing_report", "report.json is required.")
 
     # 4. Validate report.json against the protocol and configuration catalog.
-    summary = summarize_report(contents["report.json"])
+    question_index = fixture_question_index(contents["rag-replay.json"])
+    summary = summarize_report(contents["report.json"], question_index)
     summary.uncompressed_bytes = total
     return summary
+
+
+def fixture_question_index(fixture: bytes) -> dict[str, int]:
+    """Return question id -> position of the frozen fixture, parsing it only once per process.
+
+    Args:
+        fixture: rag-replay.json bytes already verified against FIXTURE_SHA256.
+    Returns:
+        Mapping with QUESTION_COUNT entries, e.g. {"85ddfcebb34fe97a5567bb69": 0, ...}.
+    """
+    if not _QUESTION_INDEX:
+        questions = json.loads(fixture)["questions"]
+        index = {question["id"]: position for position, question in enumerate(questions)}
+        if len(index) != QUESTION_COUNT:
+            raise RuntimeError("the frozen fixture does not list exactly QUESTION_COUNT distinct questions")
+        _QUESTION_INDEX.update(index)
+    return _QUESTION_INDEX
+
+
+def assess_completion(completed_questions: dict[str, int], batch: int) -> Completion:
+    """Count distinct completed fixture questions of a session's assigned configurations.
+
+    Args:
+        completed_questions: Configuration id -> completed-question bitmap (ReportSummary field).
+        batch: Session batch/profile id; selects the assigned configurations.
+    Returns:
+        Saved and required answer counts; complete only when every assigned configuration has all
+        QUESTION_COUNT questions completed. Unassigned (imported) configurations never count.
+    """
+    assigned = BATCH_CONFIGURATIONS[batch]
+    saved = sum(completed_questions.get(configuration, 0).bit_count() for configuration in assigned)
+    required = QUESTION_COUNT * len(assigned)
+    return Completion(saved_answers=saved, required_answers=required, complete=saved == required)
 
 
 def check_members(infos: list[zipfile.ZipInfo], limits: Limits) -> None:
@@ -155,11 +210,12 @@ def read_member(archive: zipfile.ZipFile, info: zipfile.ZipInfo, limits: Limits,
     return (b"".join(chunks) if keep else None), size
 
 
-def summarize_report(raw: bytes) -> ReportSummary:
+def summarize_report(raw: bytes, question_index: dict[str, int]) -> ReportSummary:
     """Parse report.json and compute progress rows exactly like CloudUploader.progress().
 
     Args:
         raw: report.json bytes.
+        question_index: Fixture question id -> position (see fixture_question_index).
     Returns:
         Report summary (uncompressed_bytes is filled by the caller).
     """
@@ -192,10 +248,13 @@ def summarize_report(raw: bytes) -> ReportSummary:
     # 3. Validate each configuration record; partial, empty and imported records are allowed.
     seen = set()
     rows = []
+    completed_questions = {}
     completed_total = 0
     for record in results:
-        rows.append(summarize_configuration(record, seen))
-        completed_total += rows[-1]["completed"]
+        row, bitmap = summarize_configuration(record, seen, question_index)
+        rows.append(row)
+        completed_questions[row["id"]] = bitmap
+        completed_total += row["completed"]
 
     # 4. Keep device metadata only when it is a reasonably sized object.
     device = metadata.get("device")
@@ -216,17 +275,20 @@ def summarize_report(raw: bytes) -> ReportSummary:
         device=device,
         app_version=app_version,
         uncompressed_bytes=0,
+        completed_questions=completed_questions,
     )
 
 
-def summarize_configuration(record: object, seen: set[str]) -> dict:
-    """Validate one results[] record and return its progress row.
+def summarize_configuration(record: object, seen: set[str], question_index: dict[str, int]) -> tuple[dict, int]:
+    """Validate one results[] record and return its progress row and completed-question bitmap.
 
     Args:
         record: Untrusted results entry.
         seen: Configuration ids already encountered (updated in place).
+        question_index: Fixture question id -> position.
     Returns:
-        Row with id, status, phase, completed, total, currentQuestion and updatedAtMs.
+        (row with id, status, phase, completed, total, currentQuestion and updatedAtMs,
+         bitmap of fixture positions whose answer is "completed"; unknown question ids are not counted).
     """
     # 1. Identity: a known configuration, listed once, with the pinned model checksum.
     if not isinstance(record, dict):
@@ -246,16 +308,20 @@ def summarize_configuration(record: object, seen: set[str]) -> dict:
         raise ReportRejected("invalid_report", f"{configuration} has malformed or too many answers.")
     question_ids = set()
     completed = 0
+    bitmap = 0
     for answer in answers:
         if not isinstance(answer, dict) or not isinstance(answer.get("questionId"), str):
             raise ReportRejected("invalid_report", f"{configuration} has a malformed answer.")
         if answer["questionId"] in question_ids:
             raise ReportRejected("invalid_report", f"{configuration} repeats a question id.")
         question_ids.add(answer["questionId"])
-        completed += answer.get("status") == "completed"
+        if answer.get("status") == "completed":
+            completed += 1
+            if answer["questionId"] in question_index:
+                bitmap |= 1 << question_index[answer["questionId"]]
 
     # 3. Mirror CloudUploader's optString/optInt/optLong defaults.
-    return {
+    row = {
         "id": configuration,
         "status": text_field(record.get("status")),
         "phase": text_field(record.get("phase")),
@@ -264,6 +330,7 @@ def summarize_configuration(record: object, seen: set[str]) -> dict:
         "currentQuestion": int_field(record.get("currentQuestion"), 0),
         "updatedAtMs": int_field(record.get("updatedAtMs"), 0),
     }
+    return row, bitmap
 
 
 def text_field(value: object) -> str:

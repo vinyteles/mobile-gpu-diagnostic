@@ -4,6 +4,7 @@ import hashlib
 import re
 
 from server.catalog import (
+    BATCH_CONFIGURATIONS,
     BATCH_NAMES,
     CONFIGURATION_MODELS,
     FIXTURE_SHA256,
@@ -52,3 +53,18 @@ def test_batch_names_match():
         "Batch 1 · Previously tested GPUs", "Batch 2 · New LiteRT GPUs",
         "Batch 3 · Original Gemma", "Batch 4 · LFM3 CPU", "Batch 5 · Energy CPU",
     ]
+
+
+def test_profiles_map_to_catalog_order_and_legacy_groups():
+    ids = list(CONFIGURATION_MODELS)
+    assert {profile: BATCH_CONFIGURATIONS[profile] for profile in range(101, 110)} == {
+        101 + index: (configuration,) for index, configuration in enumerate(ids)
+    }
+    # Pre-split Android BATCH_CONFIG_IDS: 1 -> [0, 1], 2 -> [2, 3], 3 -> [4, 8], 4 -> [5], 5 -> [6, 7].
+    legacy = {1: (0, 1), 2: (2, 3), 3: (4, 8), 4: (5,), 5: (6, 7)}
+    assert {batch: BATCH_CONFIGURATIONS[batch] for batch in legacy} == {
+        batch: tuple(ids[index] for index in indexes) for batch, indexes in legacy.items()
+    }
+    assert set(BATCH_CONFIGURATIONS) == set(BATCH_NAMES)
+    # APK_CONFIGS = listOf(BENCHMARK_CONFIGS[BuildConfig.BENCHMARK_PROFILE - 101]).
+    assert "BENCHMARK_CONFIGS[BuildConfig.BENCHMARK_PROFILE - 101]" in (KOTLIN / "ModelCatalog.kt").read_text()

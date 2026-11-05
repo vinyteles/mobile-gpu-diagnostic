@@ -129,15 +129,35 @@ def test_upload_accept_and_duplicate(client):
     response = upload(client, session, secret, data, created_at_ms=1793850219685)
     assert response.status_code == 202, response.text
     accepted = response.json()
-    assert accepted["state"] == "accepted" and accepted["sha256"] == hashlib.sha256(data).hexdigest()
+    assert accepted["state"] == "stored" and accepted["sha256"] == hashlib.sha256(data).hexdigest()
     assert accepted["cloudRunId"].startswith("bench120-1-")
     again = upload(client, session, secret, data, created_at_ms=1793850219685)
     assert again.status_code == 200 and again.json()["duplicate"] is True
     assert again.json()["uploadId"] == accepted["uploadId"]
     status = client.get(f"/v1/sessions/{session['sessionId']}", headers={"Authorization": f"Bearer {secret}"}).json()
-    assert status["sync"]["state"] == "pending" and status["sync"]["pendingUploads"] == 1
+    assert status["sync"]["state"] == "collecting" and status["sync"]["pendingUploads"] == 0
+    assert status["sync"]["storedUploads"] == 1 and status["latestAccepted"]["savedAnswers"] == 3
     detail = client.get(accepted["statusUrl"], headers={"Authorization": f"Bearer {secret}"})
-    assert detail.json()["state"] == "accepted"
+    assert detail.json()["state"] == "stored"
+
+
+def test_upload_reports_saved_progress_and_eligibility(client):
+    session, secret = register(client, batch=104)
+    assert session["assignedConfigurations"] == ["gemma-base-mixed248-gpu-replay"]
+    partial = upload(client, session, secret, make_zip(report_document(answers={"gemma-base-mixed248-gpu-replay": 42})))
+    body = partial.json()
+    assert partial.status_code == 202 and body["state"] == "stored"
+    assert (body["savedAnswers"], body["requiredAnswers"], body["complete"]) == (42, 120, False)
+    # A client-side "completed" status or queue state does not make a report complete.
+    report = report_document(answers={"gemma-base-mixed248-gpu-replay": 119}, queue_status="completed")
+    report["results"][0]["status"] = "completed"
+    body = upload(client, session, secret, make_zip(report)).json()
+    assert body["state"] == "stored" and body["savedAnswers"] == 119
+    complete = report_document(answers={"gemma-base-mixed248-gpu-replay": 120})
+    body = upload(client, session, secret, make_zip(complete)).json()
+    assert body["state"] == "accepted" and body["complete"] is True
+    status = client.get(session["statusUrl"], headers={"Authorization": f"Bearer {secret}"}).json()
+    assert status["sync"]["state"] == "pending" and status["sync"]["pendingUploads"] == 1
 
 
 def test_session_isolation(client):
@@ -247,3 +267,21 @@ def test_concurrent_independent_sessions(settings, store):
     assert store.count_sessions() == 6
     repositories = {row["repository"] for row in store.all_sessions(10)}
     assert len(repositories) == 6
+
+
+def test_default_limits_allow_fast_per_question_uploads_with_status_polling(tmp_path):
+    """A fast synthetic run: one cumulative upload per question plus stop/final snapshots, polled throughout."""
+    settings = make_settings(tmp_path)
+    client = TestClient(create_app(settings, Store(settings.database_path)), client=("127.0.0.1", 5000))
+    session, secret = register(client, batch=101)
+    headers = {"Authorization": f"Bearer {secret}", "CF-Connecting-IP": "203.0.113.9"}
+    for answers in range(1, 121):
+        data = make_zip(report_document(answers={"gemma-mixed48-gpu-replay": answers}))
+        assert upload(client, session, secret, data, created_at_ms=1793850000000 + answers).status_code == 202
+        for _ in range(3):
+            assert client.get(session["statusUrl"], headers=headers).status_code == 200
+    final = make_zip(report_document(answers={"gemma-mixed48-gpu-replay": 120}, queue_status="completed"))
+    assert upload(client, session, secret, final, created_at_ms=1793850000200).status_code == 202
+    status = client.get(session["statusUrl"], headers=headers).json()
+    assert (status["sync"]["receivedAnswers"], status["sync"]["expectedAnswers"]) == (120, 120)
+    assert status["sync"]["state"] == "pending"

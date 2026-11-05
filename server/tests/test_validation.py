@@ -6,6 +6,10 @@ import zipfile
 
 import pytest
 
+from server.catalog import (
+    BATCH_CONFIGURATIONS,
+    CONFIGURATION_MODELS,
+)
 from server.config import Limits
 from server.tests.conftest import (
     EXAMPLE_ZIP,
@@ -13,7 +17,9 @@ from server.tests.conftest import (
     report_document,
 )
 from server.validation import (
+    Completion,
     ReportRejected,
+    assess_completion,
     inspect_archive,
 )
 
@@ -129,8 +135,43 @@ def test_rejects_bad_run_id_and_json(tmp_path):
 
 
 def test_rejects_too_many_answers(tmp_path):
-    report = report_document(answers={"gemma-mixed48-gpu-replay": 121})
+    report = report_document(answers={"gemma-mixed48-gpu-replay": 120})
+    answers = report["results"][0]["answers"]
+    answers.append(dict(answers[0], questionId="extra-question"))
     assert rejected_code(tmp_path, make_zip(report)) == "invalid_report"
+
+
+def test_rejects_repeated_question_id(tmp_path):
+    report = report_document(answers={"gemma-mixed48-gpu-replay": 5})
+    answers = report["results"][0]["answers"]
+    answers.append(dict(answers[0]))
+    assert rejected_code(tmp_path, make_zip(report)) == "invalid_report"
+
+
+def test_completion_counts_distinct_completed_fixture_questions(tmp_path):
+    report = report_document(answers={"gemma-mixed48-gpu-replay": 120})
+    answers = report["results"][0]["answers"]
+    answers[7]["status"] = "error"
+    answers[8]["questionId"] = "not-a-fixture-question"
+    summary = inspect_bytes(tmp_path, make_zip(report))
+    # The client-style count still sees 119 "completed" rows, but only 118 are fixture questions.
+    assert summary.completed_answers == 119
+    completion = assess_completion(summary.completed_questions, 101)
+    assert completion == Completion(saved_answers=118, required_answers=120, complete=False)
+
+
+def test_completion_uses_only_assigned_configurations(tmp_path):
+    every = {configuration: 120 for configuration in CONFIGURATION_MODELS}
+    summary = inspect_bytes(tmp_path, make_zip(report_document(answers=every)))
+    for batch, assigned in BATCH_CONFIGURATIONS.items():
+        assert assess_completion(summary.completed_questions, batch).complete, batch
+        # Dropping one question of one assigned configuration blocks completion for that batch only.
+        partial = dict(summary.completed_questions, **{assigned[-1]: summary.completed_questions[assigned[-1]] >> 1})
+        completion = assess_completion(partial, batch)
+        assert not completion.complete and completion.saved_answers == completion.required_answers - 1
+    imported_only = {configuration: 120 for configuration in CONFIGURATION_MODELS if configuration != "lfm3-q4km-cpu-replay"}
+    summary = inspect_bytes(tmp_path, make_zip(report_document(answers=imported_only, queue_status="completed")))
+    assert assess_completion(summary.completed_questions, 106) == Completion(0, 120, False)
 
 
 def test_progress_rows_match_cloud_uploader_shape(tmp_path):

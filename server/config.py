@@ -31,15 +31,15 @@ class Limits:
     registrations_per_ip_per_hour: int = 20
     registrations_per_day: int = 60
     max_sessions: int = 500
-    # Uploads: the app checkpoints about once per minute plus once per configuration.
-    uploads_per_session_per_hour: int = 150
-    uploads_per_ip_per_hour: int = 900
+    # Uploads: the app sends a cumulative snapshot after every completed question, plus stop/final ones.
+    uploads_per_session_per_hour: int = 1200
+    uploads_per_ip_per_hour: int = 3600
     upload_bytes_per_session_per_day: int = 6 * 1024 * 1024 * 1024
     # Status/feed reads per client address.
-    reads_per_ip_per_hour: int = 3600
+    reads_per_ip_per_hour: int = 7200
     # Disk: pending (not yet published) spool bytes, and space always left free on the volume.
-    max_pending_bytes_per_session: int = 384 * 1024 * 1024
-    max_spool_bytes: int = 3 * 1024 * 1024 * 1024
+    max_pending_bytes_per_session: int = 1024 * 1024 * 1024
+    max_spool_bytes: int = 8 * 1024 * 1024 * 1024
     min_free_disk_bytes: int = 5 * 1024 * 1024 * 1024
     # Concurrency: bodies being received and ZIPs being validated at the same time.
     concurrent_receives: int = 8
@@ -54,7 +54,7 @@ class Settings:
 
     namespace: str = "vinyteles"
     repo_prefix: str = "mobilebench-relay"
-    index_repo_name: str = "mobilebench-index"
+    index_repo_name: str = "mobilebench-index-v2"
     token_file: Path = HOME / ".config/mobile-benchmark-upload/hf-token"
     data_dir: Path = HOME / "mobilebench-upload/var"
     log_dir: Path = HOME / "mobilebench-upload/logs"

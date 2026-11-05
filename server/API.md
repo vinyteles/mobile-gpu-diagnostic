@@ -1,9 +1,12 @@
 # Upload relay API (v1)
 
 The relay lets the benchmark APK publish report ZIPs without a Hugging Face account. The phone
-registers a **session**, then posts raw ZIP checkpoints. The relay validates and durably stores
-each checkpoint and acknowledges it. It then publishes the checkpoint in the background to one
-**server-owned public HF dataset per session**. The HF credential never leaves the server.
+registers a **session**, then posts a cumulative raw ZIP checkpoint after every completed
+question (plus stop, final and preparation snapshots). The relay validates and durably stores
+each checkpoint and acknowledges it. **Partial reports never leave the relay.** Only when the
+session's assigned configuration(s) hold all 120 fixture questions completed does the relay
+publish the report, in the background, to one **server-owned public HF dataset per session**.
+The HF credential never leaves the server.
 
 This contract is stable for `/v1`: field and header names below will not change incompatibly.
 
@@ -13,15 +16,15 @@ The relay runs behind a temporary Cloudflare quick tunnel, so its URL **can chan
 the tunnel restarts. Resolve the URL from a stable bootstrap document rather than compiling it
 into the APK:
 
-- the parent's GitHub raw bootstrap JSON (`endpoint` + `serviceInstanceId`), or
-- `https://huggingface.co/datasets/vinyteles/mobilebench-index/resolve/main/endpoint.json`,
+- the project's GitHub raw bootstrap JSON (`relay-endpoint-v2.json`: `endpoint` + `serviceInstanceId`), or
+- `https://huggingface.co/datasets/vinyteles/mobilebench-index-v2/resolve/main/endpoint.json`,
   which the relay updates itself after verifying the URL reaches it:
 
 ```json
 {
   "service": "mobilebench-upload-relay",
-  "url": "https://memorial-simon-bush-flickr.trycloudflare.com",
-  "serviceInstanceId": "mbr_52ee5dc7e60dfcf2266e54e506bdb10b",
+  "url": "https://example-words-here.trycloudflare.com",
+  "serviceInstanceId": "mbr_0123456789abcdef0123456789abcdef",
   "stable": false,
   "note": "Temporary Cloudflare quick-tunnel URL; it changes when the tunnel restarts. Re-read this file before uploading.",
   "verifiedAtHour": "2026-11-05T16:00Z"
@@ -37,6 +40,8 @@ Before sending a session secret to a resolved URL, the client must:
 
 `serviceInstanceId` is created once in the relay's data directory and survives restarts and
 tunnel URL changes. It is public: it identifies the server, but it is not a credential.
+A relay deployed with fresh state has a new `serviceInstanceId`, so clients bound to another
+deployment treat it as a different service.
 
 ## Authentication model
 
@@ -69,7 +74,7 @@ tunnel URL changes. It is public: it identifies the server, but it is not a cred
 
 ```json
 {"service": "mobilebench-upload-relay", "apiVersion": "v1",
- "serviceInstanceId": "mbr_52ee5dc7e60dfcf2266e54e506bdb10b", "status": "ok"}
+ "serviceInstanceId": "mbr_0123456789abcdef0123456789abcdef", "status": "ok"}
 ```
 
 ### GET /v1/ready
@@ -119,15 +124,17 @@ Response `201 Created` (new) or `200 OK` (resumed, `"created": false`):
   "repositoryCreated": false,
   "batch": 1,
   "batchName": "Batch 1 · Previously tested GPUs",
+  "assignedConfigurations": ["gemma-mixed48-gpu-replay", "lfm3-q4km-vulkan-replay"],
   "purpose": "benchmark",
   "createdAtMs": 1793896886000,
   "statusUrl": "/v1/sessions/s_c99cee52c84f3fe4",
   "checkpointsUrl": "/v1/sessions/s_c99cee52c84f3fe4/checkpoints",
-  "sync": {"state": "idle", "pendingUploads": 0, "acceptedUploads": 0, "oldestPendingReceivedAtMs": null,
+  "sync": {"state": "idle", "pendingUploads": 0, "storedUploads": 0, "acceptedUploads": 0,
+           "receivedAnswers": 0, "expectedAnswers": 240, "oldestPendingReceivedAtMs": null,
            "lastPublishedAtMs": null, "lastCommit": null, "lastError": null, "nextAttemptAtMs": null},
   "latestAccepted": null,
   "latestPublished": null,
-  "limits": {"maxUploadBytes": 67108864, "maxUncompressedBytes": 536870912, "uploadsPerHour": 150}
+  "limits": {"maxUploadBytes": 67108864, "maxUncompressedBytes": 536870912, "uploadsPerHour": 1200}
 }
 ```
 
@@ -151,7 +158,7 @@ multipart wrapping and no re-compression.
 | `Content-Type` | yes | `application/zip` (or `application/octet-stream`) |
 | `Content-Length` | recommended | Byte count (fixed-length streaming mode) |
 | `X-Content-SHA256` | yes | Lowercase hex SHA-256 of the body |
-| `X-Checkpoint-Kind` | no | `latest` (default; routine/periodic/stop) or `configuration` (after a configuration finishes, fails or is skipped) |
+| `X-Checkpoint-Kind` | no | `latest` (default; per-question/periodic/stop/final) or `configuration` (after a configuration finishes, fails or is skipped) |
 | `X-Configuration-Id` | iff kind=configuration | One of the nine configuration ids, and present in `report.json` results |
 | `X-Checkpoint-Created-At-Ms` | recommended | Phone epoch ms when this snapshot was made; orders snapshots. Implausible values (> 400 days old or > 1 day ahead) fall back to server receipt time |
 | `X-App-Version` | recommended | `BuildConfig.VERSION_NAME` |
@@ -170,6 +177,9 @@ Response `202 Accepted` (new) or `200 OK` (identical retry, `"duplicate": true`)
   "sizeBytes": 625092,
   "cloudRunId": "cloudtest-1184688406811-46f3dae6",
   "completedAnswers": 120,
+  "savedAnswers": 120,
+  "requiredAnswers": 120,
+  "complete": true,
   "clientCreatedAtMs": 1793896946000,
   "receivedAtMs": 1793896946912,
   "publishedAtMs": null,
@@ -181,10 +191,33 @@ Response `202 Accepted` (new) or `200 OK` (identical retry, `"duplicate": true`)
 ```
 
 **`202`/`200` means the bytes are fsynced on the relay and recorded in its database. The phone
-may delete its outbox copy**. The local report in Downloads remains the user's backup. HF
-publication happens later. `state` then moves to `published` (adding `commit`, `publishedAtMs`
-and `commitUrl`) or to `superseded` (a newer cumulative snapshot covering the same destination
-was published instead).
+may delete its outbox copy**. The local report in Downloads remains the user's backup.
+
+#### Completion gate and upload states
+
+The relay decides publication from the received `report.json`, never from headers, queue status
+or client counts. For each configuration assigned to the session's `batch`, it counts the
+**distinct fixture question ids** (`rag-replay.json` `questions[].id`) whose answer has
+`status == "completed"`:
+
+| `batch` | Assigned configurations (required answers) |
+|---|---|
+| 101–109 | the single configuration at position 1–9 of the catalog: `gemma-mixed48-gpu-replay`, `lfm3-q4km-vulkan-replay`, `lfm3-mixed4-litert-gpu-replay`, `gemma-base-mixed248-gpu-replay`, `gemma-base-q8-vulkan-replay`, `lfm3-q4km-cpu-replay`, `gemma-int8-cpu-replay`, `gemma-mixed48-cpu-replay`, `gemma-base-mixed248-cpu-replay` (120) |
+| legacy 1 / 2 / 3 / 4 / 5 | configurations 1+2 / 3+4 / 5+9 / 6 / 7+8 (240, 240, 240, 120, 240) |
+
+Results for other (imported) configurations are kept in the ZIP but never count.
+
+- `savedAnswers` / `requiredAnswers` / `complete`: this upload's count of distinct completed
+  assigned questions, the requirement (120 × assigned configurations), and whether it is met.
+- `state`:
+  - `stored` — partial report. Durable on the relay (fsync + SQLite), **never sent to HF**, also
+    for `stopped`/`error` queue states and `configuration` snapshots of failed/skipped runs.
+  - `accepted` — complete report waiting for HF publication.
+  - `published` — on HF (adds `commit`, `publishedAtMs`, `commitUrl`).
+  - `superseded` — another retained snapshot of the same run is newer and holds every completed
+    question of this one, so this blob was released. A snapshot is never superseded by one that
+    lacks any of its completed questions, so the most complete partial is always kept and late or
+    older snapshots cannot roll progress back.
 
 Validation performed before acceptance (`422 <code>`):
 `invalid_zip`, `too_many_members` (> 64), `unexpected_member` (anything other than the
@@ -209,11 +242,18 @@ Other errors: `400 missing_checksum | checksum_mismatch | invalid_kind | invalid
 ### GET /v1/sessions/{sessionId}
 
 This returns the same document as registration, with live `sync`, `latestAccepted` and
-`latestPublished`. Use it for the app's sync line:
+`latestPublished`. Use it for the app's sync line, e.g. "Server saved 42/120; HF publishes at 120":
 
-- `sync.state == "pending"`: the relay has accepted the checkpoints, but they are not on HF
-  yet. `lastError` and `nextAttemptAtMs` show relay-side HF retries; the phone does nothing.
-- `sync.state == "synced"`: everything accepted is on HF (`lastCommit`).
+- `sync.receivedAnswers` / `sync.expectedAnswers`: distinct completed assigned questions held by
+  the relay for the session's newest run, and the publication requirement.
+  `latestAccepted.savedAnswers` / `requiredAnswers` give the same numbers for the newest snapshot;
+  `latestAccepted.configurations` remains as a per-configuration fallback.
+- `sync.state`:
+  - `idle`: nothing uploaded yet.
+  - `collecting`: partial reports are stored on the relay only (`storedUploads`); nothing is on HF.
+  - `pending`: a complete report awaits HF publication (`pendingUploads`). `lastError` and
+    `nextAttemptAtMs` show relay-side HF retries; the phone does nothing.
+  - `synced`: complete reports are on HF (`lastCommit`).
 
 ### GET /v1/public/sessions
 
@@ -223,11 +263,13 @@ This returns the same document as registration, with live `sync`, `latestAccepte
    "repositoryUrl": "https://huggingface.co/datasets/vinyteles/mobilebench-relay-…",
    "repositoryCreated": true, "batch": 1, "batchName": "Batch 1 · Previously tested GPUs",
    "purpose": "benchmark", "createdAtMs": 1793896886000,
-   "sync": {"state": "synced", "pendingUploads": 0, "acceptedUploads": 4,
-            "lastPublishedAtMs": 1793896950000, "lastCommit": "61430cae…", "retrying": false},
-   "latest": {"uploadId": "u_…", "state": "published", "cloudRunId": "bench120-…-8b1693f0",
+   "sync": {"state": "collecting", "pendingUploads": 0, "storedUploads": 1, "acceptedUploads": 37,
+            "receivedAnswers": 37, "expectedAnswers": 240,
+            "lastPublishedAtMs": null, "lastCommit": null, "retrying": false},
+   "latest": {"uploadId": "u_…", "state": "stored", "cloudRunId": "bench120-…-8b1693f0",
               "updatedAtMs": 1793896946000, "receivedAtMs": 1793896946912, "appVersion": "2.2",
-              "smokeTest": false, "completedAnswers": 37,
+              "smokeTest": false, "completedAnswers": 37, "savedAnswers": 37, "requiredAnswers": 240,
+              "complete": false,
               "queue": {"status": "running", "stage": "benchmark"},
               "configurations": [{"id": "gemma-mixed48-gpu-replay", "status": "running", "completed": 37, "total": 120}],
               "device": {"manufacturer": "samsung", "model": "SM-S931B", "socManufacturer": "Qualcomm",
@@ -235,8 +277,9 @@ This returns the same document as registration, with live `sync`, `latestAccepte
               "clientReported": true}}]}
 ```
 
-The worker also publishes the same list as `sessions.json` in
-`https://huggingface.co/datasets/vinyteles/mobilebench-index` (at most every 2 minutes, only
+The feeds expose progress counts and client-reported device fields only, never answers or
+metrics. The worker also publishes the same list as `sessions.json` in
+`https://huggingface.co/datasets/vinyteles/mobilebench-index-v2` (at most every 2 minutes, only
 on change). That URL stays stable when the tunnel URL changes. `sessions.json` is a list of
 objects with `repository`, so it works directly with
 `scripts/watch-hf-benchmark.py --sessions-file`.
@@ -245,6 +288,8 @@ Device, timing and answer fields are **client-reported**. The relay checks the r
 the fixture and the model checksums. It does not authenticate the hardware.
 
 ## Published HF layout (unchanged from APK 2.1, plus sidecars)
+
+Only complete (`accepted`) reports are written here; the repository is created by the first one.
 
 ```
 README.md                                        dataset card (synthetic banner for test sessions)
@@ -262,9 +307,10 @@ the received ZIP, and adds a `relay` object (`sessionId`, `uploadId`, `receivedA
 `checkpointKind`, `clientCreatedAtMs`, `clientReported: true`, `note`). Every JSON is committed
 **in the same HF commit** as the ZIP it hashes. A slot is only overwritten by a newer
 snapshot, ordered by (`X-Checkpoint-Created-At-Ms`, completed answers, receipt time).
-Routine checkpoints are coalesced, with at most one routine commit per session every 90 s.
-Configuration snapshots and final checkpoints (queue status `completed`/`stopped`/`error`) are
-published without the 90 s pacing.
+Complete routine checkpoints are coalesced, with at most one routine commit per session every
+90 s after the first. Complete configuration snapshots and final checkpoints (queue status
+`completed`/`stopped`/`error`) are published without the 90 s pacing. Every relay commit title
+ends with `complete (<saved>/<required> answers)`.
 
 ## Limits (defaults)
 
@@ -274,13 +320,19 @@ published without the 90 s pacing.
 | Uncompressed total / per member / members | 512 MiB / 256 MiB / 64 | 422 |
 | Registrations per client IP | 20 / hour | 429 |
 | New sessions service-wide | 60 / day, 500 total | 429 |
-| Uploads per session / per client IP | 150 / hour, 900 / hour | 429 |
+| Uploads per session / per client IP | 1200 / hour, 3600 / hour | 429 |
 | Upload volume per session | 6 GiB / day | 429 |
-| Unpublished spool per session / total | 384 MiB / 3 GiB | 507 |
+| Retained spool (stored + unpublished) per session / total | 1 GiB / 8 GiB | 507 |
 | Free disk kept on the volume | 5 GiB | 507 |
 | Concurrent bodies being received / ZIP validations | 8 / 2 | 429 `server_busy` |
 | Body idle / total time | 60 s / 900 s | 408 |
-| Status/feed reads per client IP | 3600 / hour | 429 |
+| Status/feed reads per client IP | 7200 / hour | 429 |
+
+Upload rates are sized for one cumulative snapshot per completed question: a fast synthetic run
+sends 120 snapshots in minutes, and a real run plus stop/final snapshots and retries stays far
+below 1200/hour. 3600/hour per IP leaves room for several phones behind one carrier NAT. Status
+polling every few seconds while running stays below 7200/hour. Byte quotas still bound abuse:
+superseded snapshots are released, so a run normally keeps about one retained ZIP.
 
 The client IP comes from `CF-Connecting-IP` only when the TCP peer is the local tunnel
 connector (127.0.0.1). Otherwise the peer address is used.
@@ -301,8 +353,10 @@ Every error body is `{"error": {"code": "...", "message": "...", "retryable": tr
 | Base URL unreachable or `serviceInstanceId` mismatch | Re-read the bootstrap JSON (URL may have changed); retry later. |
 
 Newer snapshots are safe to send while older ones are still queued, and in any order. The
-relay never lets an older snapshot replace newer progress. Phones only need to keep the newest
-routine checkpoint plus each configuration snapshot in their outbox.
+relay never lets an older snapshot replace newer progress and never discards a snapshot holding
+a completed question that no newer retained snapshot has. Because snapshots are cumulative,
+phones may coalesce their outbox to the newest routine checkpoint plus each configuration
+snapshot during network outages.
 
 ## Examples
 
@@ -315,13 +369,15 @@ curl -fsS https://YOUR-RELAY-HOST/v1/health
 Use the Python client below for authenticated validation. It keeps its generated session
 capability in memory rather than shell arguments or command history.
 
-Python: `server/e2e_check.py` is a complete client. It registers (and retries registration),
-uploads a configuration snapshot and a duplicate, checks isolation and malformed-ZIP rejection,
-waits for publication, and downloads the JSON+ZIP pairs anonymously from HF at the commit to
-verify the checksums:
+Python: `server/e2e_check.py` is a complete client for the completion gate. It registers a
+`synthetic-test` session (and retries registration), sends synthetic cumulative snapshots with
+1, 42 and 119 answers plus stopped and errored ones, checks they stay `stored` with no HF
+repository, optionally restarts the relay, sends the 120th answer, waits for publication,
+downloads the JSON+ZIP pair anonymously from HF at the commit to verify the checksums, and
+checks a stale snapshot is superseded:
 
 ```sh
-python -m server.e2e_check --base-url "$BASE" --zip examples/report.zip   # synthetic ZIP only
+python -m server.e2e_check --base-url "$BASE" [--restart-command "server/deploy/restart.sh api worker"]
 ```
 
 ## Android integration contract (for the next APK)
@@ -336,7 +392,9 @@ python -m server.e2e_check --base-url "$BASE" --zip examples/report.zip   # synt
    kind `configuration` + `X-Configuration-Id` where `CloudUploader.enqueue` receives a
    configuration, and kind `latest` otherwise. Use the existing outbox and backoff, keyed by
    file, and delete the outbox entry on `202`/`200`.
-4. Show "accepted by relay" (202) separately from "synced to HF"
-   (`GET /v1/sessions/{id}` → `sync.state`), and display `repositoryUrl`.
+4. Upload a cumulative snapshot after every completed question. Show "saved on relay
+   `receivedAnswers`/`expectedAnswers`" (202, `sync.state == "collecting"`) separately from
+   "pending HF" and "synced to HF" (`GET /v1/sessions/{id}` → `sync.state`), and display
+   `repositoryUrl` (it exists on HF only after the first complete report).
 5. Do not add tokens or the session secret to report ZIPs. Synthetic reports must keep
    `smokeTest=true`, and debug builds should register with `purpose: "synthetic-test"`.

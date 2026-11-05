@@ -1,12 +1,13 @@
 #!/usr/bin/env bash
 # Cloudflare quick tunnel to the loopback API. Writes the active https URL to the endpoint files
 # and exits (so supervise.sh restarts it, with a NEW URL) if the public URL stops answering.
+# Optional: MOBILEBENCH_ENDPOINT_COPY=<file> also receives the URL (e.g. for an operator's agent).
 set -u
 relay_home=${MOBILEBENCH_HOME:?}
 api=http://127.0.0.1:18765
 metrics=127.0.0.1:18766
 endpoint=$relay_home/run/endpoint.txt
-state_copy=$HOME/.local/state/mobile-upload-agent/endpoint.txt
+state_copy=${MOBILEBENCH_ENDPOINT_COPY:-}
 
 # 1. Start the outbound-only tunnel; no Cloudflare account, DNS or inbound port is involved.
 "$relay_home/bin/cloudflared" tunnel --no-autoupdate --metrics "$metrics" --url "$api" &
@@ -23,7 +24,7 @@ for _ in $(seq 1 90); do
 done
 [ -n "$host" ] || { echo "tunnel: no hostname assigned"; kill "$pid"; exit 1; }
 url="https://$host"
-for file in "$endpoint" "$state_copy"; do
+for file in "$endpoint" $state_copy; do
     if [ -d "$(dirname "$file")" ]; then printf '%s\n' "$url" >"$file.tmp" && mv -f "$file.tmp" "$file"; fi
 done
 echo "$(date -u +%FT%TZ) tunnel: active endpoint $url"

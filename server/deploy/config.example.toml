@@ -1,12 +1,13 @@
 # Optional overrides: copy to ~/mobilebench-upload/config.toml and restart api+worker.
 # Every key is optional; defaults live in server/config.py. Unknown keys are rejected.
 # namespace = "vinyteles"
+# index_repo_name = "mobilebench-index-v2"
 # token_file = "~/.config/mobile-benchmark-upload/hf-token"
 # min_latest_interval_s = 90
 
 [limits]
 # max_upload_bytes = 67108864
 # registrations_per_day = 60
-# uploads_per_session_per_hour = 150
-# max_spool_bytes = 3221225472
+# uploads_per_session_per_hour = 1200
+# max_spool_bytes = 8589934592
 # min_free_disk_bytes = 5368709120
