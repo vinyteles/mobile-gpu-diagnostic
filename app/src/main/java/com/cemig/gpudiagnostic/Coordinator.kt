@@ -11,7 +11,8 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicBoolean
 
 /** One persisted queue: established GPUs, experimental GPUs, then CPUs. */
-class Coordinator(private val context: Context, private val configurations: List<BenchmarkConfig> = APK_CONFIGS) {
+class Coordinator(private val context: Context, private val configurations: List<BenchmarkConfig> = APK_CONFIGS,
+                  private val reportEachQuestion: Boolean = true) {
     private val stopped = AtomicBoolean(false)
     private val active = AtomicBoolean(false)
     private val stateFile = File(context.filesDir, "queue-benchmark-120-v2.json")
@@ -88,12 +89,13 @@ class Coordinator(private val context: Context, private val configurations: List
                     .put("litertVersion", BuildConfig.LITERT_VERSION).put("llamaRevision", BuildConfig.LLAMA_REVISION)
                     .put("scope", "120 frozen MobileRAG+ retrieval prompts per configuration; generation only; 30 base questions in four wording categories.")
                     .put("settings", replayDataset(context).getJSONObject("settings"))
-                    .put("timingPolicy", "One engine per configuration/session except LFM LiteRT: new engine per question to reset recurrent state. Per-question load/close overhead is recorded separately and included in endToEndMs. No cross-question conversations; model-specific templates. Snapshots are published every 60 seconds and after each configuration; wall timing includes checkpoint/export overhead. Fixed order, not thermally counterbalanced.")
+                    .put("timingPolicy", "One engine per configuration/session except LFM LiteRT: new engine per question to reset recurrent state. Per-question load/close overhead is recorded separately and included in endToEndMs. No cross-question conversations; model-specific templates. After each completed question a cumulative ZIP is queued before the next question starts; network uploads run asynchronously. Additional snapshots are queued every 60 seconds while waiting, on stop and at configuration end. Server publishes to HF only after all assigned questions are complete. Wall timing includes checkpoint/export overhead. Fixed order, not thermally counterbalanced.")
                     .put("backendPolicy", "Exact requested backend; no app CPU fallback. Native operators can still use CPU. Q8 GPU requires model bytes plus 768 MiB available RAM before loading; otherwise skipped with evidence.")
                     .put("models", JSONArray(BENCHMARK_MODELS.map { JSONObject().put("id", it.id).put("url", it.url).put("bytes", it.bytes).put("sha256", it.sha256) }))
                 check(metadata.getString("protocolId") == PROTOCOL_ID)
                 val attempts = metadata.optJSONArray("executionAttempts") ?: JSONArray().also { metadata.put("executionAttempts", it) }
                 attempts.put(JSONObject().put("startedAtMs", System.currentTimeMillis()).put("appVersion", BuildConfig.VERSION_NAME).put("batch", BENCHMARK_BATCH_NAME)
+                    .put("uploadPolicy", "Cumulative checkpoint after every completed question; HF publication after all assigned questions complete.")
                     .put("device", deviceInfo(context)).put("configurationOrder", JSONArray(configs.map { it.id })))
                 writeJson(File(run, "metadata.json"), metadata)
 
@@ -166,7 +168,8 @@ class Coordinator(private val context: Context, private val configurations: List
                         putString("engineCache", engineCache.path)
                         if (synthetic) { putString("smoke", "replay_ui"); putInt("questionLimit", QUESTION_COUNT) }
                     }
-                    WorkerBridge(context).run(arguments, { stopped.get() }, timeoutMs = 6 * 60 * 60 * 1000L, periodicReport = { saveReport(run) })
+                    WorkerBridge(context).run(arguments, { stopped.get() }, timeoutMs = 6 * 60 * 60 * 1000L,
+                        periodicReport = { saveReport(run) }, questionCompleted = if (reportEachQuestion) ({ saveReport(run) }) else null)
                     saveReport(run, config.id)
                 }
                 if (stopped.get()) throw CancellationException()

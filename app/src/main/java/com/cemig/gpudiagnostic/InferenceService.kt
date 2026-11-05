@@ -30,10 +30,13 @@ const val HELLO = 1
 const val RUN = 2
 const val READY = 10
 const val DONE = 11
+const val QUESTION_COMPLETED = 12
+const val CHECKPOINT_QUEUED = 13
 
 /** One single test or one reusable-engine batch per disposable process. Native aborts cannot erase the controller's report. */
 class InferenceService : Service() {
     private var started = false
+    private val pendingCheckpoint = AtomicReference<Pair<Int, CountDownLatch>?>(null)
     private val messenger = Messenger(Handler(Looper.getMainLooper()) { request ->
         when (request.what) {
             HELLO -> request.replyTo.send(android.os.Message.obtain(null, READY).apply { arg1 = Process.myPid() })
@@ -42,10 +45,11 @@ class InferenceService : Service() {
                 val arguments = request.data
                 val client = request.replyTo
                 Thread({
-                    execute(arguments)
+                    execute(arguments, client)
                     runCatching { client.send(android.os.Message.obtain(null, DONE)) }
                 }, "inference-worker").start()
             }
+            CHECKPOINT_QUEUED -> pendingCheckpoint.get()?.takeIf { it.first == request.arg1 }?.second?.countDown()
         }
         true
     })
@@ -53,13 +57,24 @@ class InferenceService : Service() {
     override fun onBind(intent: Intent): IBinder = messenger.binder
 
     @OptIn(ExperimentalApi::class)
-    private fun execute(arguments: Bundle) {
+    private fun execute(arguments: Bundle, client: Messenger) {
         val caseFile = File(arguments.getString("caseFile")!!)
         val result = readJson(caseFile) ?: JSONObject()
         fun checkpoint(phase: String) {
             result.put("phase", phase).put("updatedAtMs", System.currentTimeMillis())
                 .put("workerPid", Process.myPid()).put("memory", memorySnapshot(this))
             writeJson(caseFile, result)
+            if (phase == "question_completed" && arguments.getBoolean("checkpointPerQuestion")) {
+                // Queue this saved answer before the next question; never wait for the network.
+                val sequence = result.getInt("currentQuestion")
+                val queued = CountDownLatch(1)
+                pendingCheckpoint.set(sequence to queued)
+                runCatching {
+                    client.send(android.os.Message.obtain(null, QUESTION_COMPLETED).apply { arg1 = sequence })
+                    queued.await(60, TimeUnit.SECONDS)
+                }
+                pendingCheckpoint.set(null)
+            }
         }
 
         try {

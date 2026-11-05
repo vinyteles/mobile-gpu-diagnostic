@@ -58,6 +58,7 @@ class MainActivity : Activity() {
         preview = BuildConfig.DEBUG && intent.getBooleanExtra("preview", false)
         buildScreen(coordinator.stage)
         if (!preview) coordinator.autoStart(smoke)
+        if (!preview && !coordinator.isRunning) Thread({ coordinator.syncReport() }, "restore-upload-checkpoint").start()
     }
     override fun onSaveInstanceState(outState: Bundle) { outState.putStringArrayList("expanded", ArrayList(expanded)); super.onSaveInstanceState(outState) }
     override fun onResume() { super.onResume(); handler.post(refresh) }
@@ -159,7 +160,7 @@ class MainActivity : Activity() {
             repeatButton = button(content, "Start a new run (keep old reports)") { coordinator.start(newRun = true, smoke = smoke) }
         }
         if (stage != "downloads") button(content, "Import previous report ZIP") { chooseReport() }
-        label(content, "Reports are saved locally and uploaded automatically to a public Hugging Face session repository.", 12f)
+        label(content, "Each completed answer is saved locally and sent to the server. The complete run is published to HF after all 120 answers finish.", 12f)
         setContentView(ScrollView(this).apply { addView(content) })
         renderProgress()
     }
@@ -230,7 +231,7 @@ class MainActivity : Activity() {
 
     private fun cloudSettings() {
         val layout = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(dp(20), dp(12), dp(20), 0) }
-        label(layout, "Reports upload automatically. Each session gets a public Hugging Face repository. No account or token setup is needed.")
+        label(layout, "Each completed answer uploads to the server automatically. The server saves partial progress and publishes to a public Hugging Face repository after all 120 answers finish. No account or token setup is needed.")
         label(layout, cloud.status)
         val address = cloud.repositoryUrl
         if (address.isNotBlank()) {
@@ -240,7 +241,7 @@ class MainActivity : Activity() {
                 Toast.makeText(this, "Results link copied", Toast.LENGTH_SHORT).show()
             }
         }
-        label(layout, "Uploads include questions, retrieved context, reference and generated answers, device information, and metrics. Keep the app open until the status says Hugging Face synced.", 13f)
+        label(layout, "Uploads include questions, retrieved context, reference and generated answers, device information, and metrics. During a partial run, check the server's saved-answer count. After completion, keep the app open until Hugging Face synced. Keep a ZIP backup before RTL ends.", 13f)
         val dialog = AlertDialog.Builder(this).setTitle("Automatic report uploads").setView(layout)
             .setPositiveButton("Retry uploads") { _, _ -> cloud.retry() }
             .setNegativeButton("Close", null)

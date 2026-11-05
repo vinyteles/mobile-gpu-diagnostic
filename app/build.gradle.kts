@@ -11,8 +11,8 @@ android {
         applicationId = "com.cemig.gpudiagnostic"
         minSdk = 31
         targetSdk = 36
-        versionCode = 9
-        versionName = "2.3"
+        versionCode = 10
+        versionName = "2.4"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         // Wire IDs 1–5 remain reserved for the historical multi-configuration APKs.
         buildConfigField("int", "BENCHMARK_PROFILE", (100 + benchmarkProfile).toString())

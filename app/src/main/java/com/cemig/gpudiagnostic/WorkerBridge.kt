@@ -24,7 +24,8 @@ import java.util.concurrent.atomic.AtomicReference
 
 /** Starts a remote worker, captures its logs, and converts process death or timeout into a result. */
 class WorkerBridge(private val context: Context) {
-    fun run(arguments: Bundle, cancelled: () -> Boolean, timeoutMs: Long = 360_000, periodicReport: (() -> Unit)? = null): JSONObject {
+    fun run(arguments: Bundle, cancelled: () -> Boolean, timeoutMs: Long = 360_000,
+            periodicReport: (() -> Unit)? = null, questionCompleted: (() -> Unit)? = null): JSONObject {
         check(Looper.myLooper() != Looper.getMainLooper()) { "WorkerBridge must run off the UI thread" }
         val caseFile = File(arguments.getString("caseFile")!!)
         val main = Handler(Looper.getMainLooper())
@@ -35,10 +36,12 @@ class WorkerBridge(private val context: Context) {
         val died = AtomicBoolean(false)
         val bound = AtomicBoolean(false)
         val ipcError = AtomicReference<String?>(null)
+        val completedQuestion = AtomicInteger(0)
         val callback = Messenger(Handler(Looper.getMainLooper()) { response ->
             when (response.what) {
                 READY -> { pid.set(response.arg1); ready.countDown() }
                 DONE -> finished.countDown()
+                QUESTION_COMPLETED -> completedQuestion.set(response.arg1)
             }
             true
         })
@@ -74,6 +77,7 @@ class WorkerBridge(private val context: Context) {
             val log = File(caseFile.parentFile, caseFile.nameWithoutExtension + ".log")
             capture = ProcessBuilder("logcat", "--pid=${pid.get()}", "-v", "threadtime", "-T", "1")
                 .redirectErrorStream(true).redirectOutput(java.lang.ProcessBuilder.Redirect.appendTo(log)).start()
+            arguments.putBoolean("checkpointPerQuestion", questionCompleted != null)
             remote.get()!!.send(Message.obtain(null, RUN).apply { data = arguments; replyTo = callback })
 
             // 2. Wait for a result, process death, user cancellation, or the hard deadline.
@@ -82,6 +86,14 @@ class WorkerBridge(private val context: Context) {
             var checkpointTime = caseFile.lastModified()
             var lastReport = SystemClock.elapsedRealtime()
             while (true) {
+                val question = completedQuestion.getAndSet(0)
+                if (question > 0) {
+                    try { questionCompleted?.invoke() }
+                    finally {
+                        runCatching { remote.get()?.send(Message.obtain(null, CHECKPOINT_QUEUED).apply { arg1 = question }) }
+                    }
+                    lastReport = SystemClock.elapsedRealtime()
+                }
                 if (caseFile.lastModified() != checkpointTime) {
                     checkpointTime = caseFile.lastModified()
                     progressTime = SystemClock.elapsedRealtime()

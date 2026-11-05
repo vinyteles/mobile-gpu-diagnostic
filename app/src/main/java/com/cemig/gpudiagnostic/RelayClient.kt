@@ -9,7 +9,7 @@ import java.net.URL
 /** A trusted public bootstrap document locates the relay; session capabilities never go to redirects. */
 class RelayClient(private val bootstrap: String = BOOTSTRAP_URL) {
     companion object {
-        const val BOOTSTRAP_URL = "https://raw.githubusercontent.com/vinyteles/mobile-gpu-diagnostic/main/relay-endpoint.json"
+        const val BOOTSTRAP_URL = "https://raw.githubusercontent.com/vinyteles/mobile-gpu-diagnostic/main/relay-endpoint-v2.json"
     }
     private var endpoint = ""
     private var identity = ""
@@ -23,7 +23,7 @@ class RelayClient(private val bootstrap: String = BOOTSTRAP_URL) {
         check(expected.isNotBlank()) { "Missing relay identity." }
         // The server updates its HF index after tunnel restarts; GitHub pins the expected server identity.
         val discovery = config.optString("discoveryUrl").takeIf { it.isNotBlank() }?.let { address ->
-            require(address == "https://huggingface.co/datasets/vinyteles/mobilebench-index/resolve/main/endpoint.json")
+            require(address == "https://huggingface.co/datasets/vinyteles/mobilebench-index-v2/resolve/main/endpoint.json")
             runCatching { request(address, "GET", redirects = 3) }.getOrNull()
                 ?.takeIf { it.optString("serviceInstanceId") == expected && it.optString("url").startsWith("https://") }
         }

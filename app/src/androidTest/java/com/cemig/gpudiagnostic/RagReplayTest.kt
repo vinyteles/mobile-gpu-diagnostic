@@ -16,6 +16,23 @@ import java.util.zip.ZipFile
 class RagReplayTest {
     private val context = ApplicationProvider.getApplicationContext<Context>()
 
+    @Test fun eachCompletedAnswerQueuesACheckpointBeforeTheNextQuestion() {
+        val run = File(context.cacheDir, "question-checkpoints-${System.nanoTime()}").apply { mkdirs() }
+        val file = File(run, "case.json")
+        writeJson(file, JSONObject().put("status", "pending"))
+        val counts = mutableListOf<Int>()
+        val result = WorkerBridge(context).run(Bundle().apply {
+            putString("caseFile", file.path); putString("smoke", "replay_success")
+            putBoolean("replay", true); putInt("questionLimit", 3)
+        }, { false }, 20_000, questionCompleted = {
+            val saved = checkNotNull(readJson(file)).getJSONArray("answers")
+            assertTrue((0 until saved.length()).all { saved.getJSONObject(it).getString("status") == "completed" })
+            counts.add(saved.length())
+        })
+        assertEquals("completed", result.getString("status"))
+        assertEquals(listOf(1, 2, 3), counts)
+    }
+
     private fun runWorker(file: File, mode: String): JSONObject = WorkerBridge(context).run(Bundle().apply {
         putString("caseFile", file.path); putString("smoke", mode)
         putBoolean("replay", true); putInt("questionLimit", 3)

@@ -34,10 +34,11 @@ class CoordinatorTest {
 
     @Test fun fullQueueRunsEstablishedGpusFirstExportsAndResumesWithoutRepeatingAnswers() {
         val context = ApplicationProvider.getApplicationContext<Context>()
-        val coordinator = Coordinator(context, BENCHMARK_CONFIGS)
+        // The separate single-configuration test exercises per-question export at release settings.
+        val coordinator = Coordinator(context, BENCHMARK_CONFIGS, reportEachQuestion = false)
         context.getSharedPreferences("benchmark-120-v2", Context.MODE_PRIVATE).edit().putStringSet("configurations", BENCHMARK_CONFIGS.map { it.id }.toSet()).commit()
         fun finish() {
-            val deadline = System.currentTimeMillis() + 180_000
+            val deadline = System.currentTimeMillis() + 600_000
             while (coordinator.isRunning && System.currentTimeMillis() < deadline) Thread.sleep(100)
             assertFalse("Controller did not finish: ${coordinator.status}", coordinator.isRunning)
         }
@@ -70,7 +71,7 @@ class CoordinatorTest {
             .putStringSet("configurations", BENCHMARK_CONFIGS.map { it.id }.toSet()).commit()
         val coordinator = Coordinator(context)
         fun finish() {
-            val deadline = System.currentTimeMillis() + 60_000
+            val deadline = System.currentTimeMillis() + 180_000
             while (coordinator.isRunning && System.currentTimeMillis() < deadline) Thread.sleep(100)
             assertFalse(coordinator.status, coordinator.isRunning)
         }

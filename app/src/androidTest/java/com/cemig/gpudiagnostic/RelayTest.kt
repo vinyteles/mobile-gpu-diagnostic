@@ -17,18 +17,19 @@ import java.util.concurrent.atomic.AtomicReference
 class RelayTest {
     private val context = ApplicationProvider.getApplicationContext<Context>()
 
-    private fun report(): Pair<File, File> {
+    private fun report(questionLimit: Int = QUESTION_COUNT): Pair<File, File> {
         val run = File(context.cacheDir, "relaytest-${System.nanoTime()}").apply { mkdirs() }
         val fixture = File(run, "rag-replay.json")
         context.assets.open("rag-replay.json").use { input -> fixture.outputStream().use { input.copyTo(it) } }
         writeJson(File(run, "metadata.json"), JSONObject().put("runId", run.name).put("protocolId", PROTOCOL_ID)
             .put("fixtureSha256", sha256(fixture)).put("smokeTest", true).put("device", deviceInfo(context)))
-        writeJson(File(run, "queue-state.json"), JSONObject().put("status", "completed").put("stage", "benchmark"))
-        val config = BENCHMARK_CONFIGS.first()
+        writeJson(File(run, "queue-state.json"), JSONObject().put("status", if (questionLimit == QUESTION_COUNT) "completed" else "running").put("stage", "benchmark"))
+        val config = APK_CONFIGS.single()
         val record = JSONObject().put("id", config.id).put("modelSha256", config.model.sha256)
         val file = File(run, "${config.id}.json")
-        runReplay(context, null, record, { writeJson(file, record) }, smokeMode = "replay_success")
-        record.put("status", "completed"); writeJson(file, record)
+        runReplay(context, null, record, { writeJson(file, record) }, questionLimit = questionLimit, smokeMode = "replay_success")
+        record.put("totalQuestions", QUESTION_COUNT).put("status", if (questionLimit == QUESTION_COUNT) "completed" else "running")
+        writeJson(file, record)
         return run to ReportExporter(context).archive(run)
     }
 
@@ -39,7 +40,7 @@ class RelayTest {
         val secret = settings.secret(first)
         assertTrue(secret.matches(Regex("[A-Za-z0-9_-]{43}")))
         assertEquals(secret, RelaySettings(context).secret(settings.sessionFor(run, 1, true)))
-        assertFalse(File(context.filesDir, "relay-sessions/${first.getString("scope")}.json").readText().contains(secret))
+        assertFalse(File(context.filesDir, "relay-sessions-v2/${first.getString("scope")}.json").readText().contains(secret))
         assertNotEquals(secret, settings.secret(settings.sessionFor(run, 2, true)))
         val configurationSecret = settings.secret(settings.sessionFor(run, 101, true))
         assertNotEquals(secret, configurationSecret)
@@ -49,9 +50,33 @@ class RelayTest {
         assertEquals(secret, settings.secret(settings.session(first.getString("scope"))))
     }
 
+    @Test fun replacementServiceUsesFreshCredentialsAndPreservesLegacyState() {
+        val legacy = File(context.filesDir, "relay-sessions/legacy-migration-check.json")
+        legacy.parentFile!!.mkdirs()
+        legacy.writeText("legacy session retained")
+        val oldOutbox = File(context.filesDir, "relay-outbox/legacy-migration-check.json")
+        oldOutbox.parentFile!!.mkdirs()
+        oldOutbox.writeText("legacy checkpoint retained")
+        val preferences = context.getSharedPreferences("relay-uploads", Context.MODE_PRIVATE)
+        val oldScope = preferences.getString("currentScope", null)
+        preferences.edit().putString("currentScope", "old-server-scope").commit()
+        try {
+            val settings = RelaySettings(context)
+            val session = settings.sessionFor("new-server-${System.nanoTime()}", BuildConfig.BENCHMARK_PROFILE, true)
+            assertFalse(session.has("serviceInstanceId"))
+            assertFalse(session.has("sessionId"))
+            assertNotEquals("old-server-scope", settings.currentScope)
+            assertEquals("legacy session retained", legacy.readText())
+            assertEquals("legacy checkpoint retained", oldOutbox.readText())
+        } finally {
+            preferences.edit().putString("currentScope", oldScope).commit()
+            legacy.delete(); oldOutbox.delete()
+        }
+    }
+
     @Test fun retryKeepsLocalCheckpointAndDoesNotCallAcceptedReportSynced() {
         val (run, archive) = report()
-        val outbox = File(context.filesDir, "relay-outbox")
+        val outbox = File(context.filesDir, "relay-outbox-v2")
         val server = ServerSocket(0)
         val failure = AtomicReference<Throwable?>(null)
         var registrationCount = 0
@@ -112,7 +137,7 @@ class RelayTest {
             val retry = RelayUploader(context, RelayClient(bootstrap), automatic = false, allowSynthetic = true)
             retry.drain()
             assertFalse(outbox.listFiles().orEmpty().any { it.extension == "json" })
-            assertTrue(retry.status, retry.status.startsWith("Server has your report"))
+            assertTrue(retry.status, retry.status.startsWith("Server saved"))
             retry.drain()
             assertTrue(retry.status, retry.status.startsWith("Hugging Face synced"))
             assertEquals(1, registrationCount)
@@ -125,8 +150,20 @@ class RelayTest {
         val options = InstrumentationRegistry.getArguments()
         assumeTrue("Supply -e liveRelay true for the real network check", options.getString("liveRelay") == "true")
         val uploader = RelayUploader(context, RelayClient(options.getString("relayBootstrap") ?: RelayClient.BOOTSTRAP_URL), automatic = false, allowSynthetic = true)
-        val (run, archive) = report()
-        uploader.enqueue(run, archive, BENCHMARK_CONFIGS.first().id)
+        val (run, archive) = report(questionLimit = 1)
+        uploader.enqueue(run, archive)
+        uploader.drain()
+        assertTrue(uploader.status, uploader.status.startsWith("Server saved 1 / 120"))
+        val partial = checkNotNull(readJson(File(context.filesDir, "relay-last-status.json")))
+        assertEquals("collecting", partial.getJSONObject("sync").getString("state"))
+        assertFalse(partial.getBoolean("repositoryCreated"))
+        val config = APK_CONFIGS.single()
+        val file = File(run, "${config.id}.json")
+        val result = checkNotNull(readJson(file))
+        runReplay(context, null, result, { writeJson(file, result) }, smokeMode = "replay_success")
+        result.put("status", "completed"); writeJson(file, result)
+        writeJson(File(run, "queue-state.json"), JSONObject().put("status", "completed").put("stage", "benchmark"))
+        uploader.enqueue(run, ReportExporter(context).archive(run), config.id)
         val deadline = System.currentTimeMillis() + 180_000
         do {
             uploader.drain()

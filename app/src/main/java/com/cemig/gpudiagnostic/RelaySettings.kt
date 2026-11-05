@@ -17,8 +17,9 @@ import javax.crypto.spec.GCMParameterSpec
 
 /** Device-created session capabilities; no Hugging Face account credential is needed. */
 class RelaySettings(context: Context) {
-    private val preferences = context.getSharedPreferences("relay-uploads", Context.MODE_PRIVATE)
-    private val directory = File(context.filesDir, "relay-sessions").apply { mkdirs() }
+    // The replacement service has its own identity. Preserve legacy credentials as a backup.
+    private val preferences = context.getSharedPreferences("relay-uploads-v2", Context.MODE_PRIVATE)
+    private val directory = File(context.filesDir, "relay-sessions-v2").apply { mkdirs() }
     val installationId: String = preferences.getString("installationId", null) ?: UUID.randomUUID().toString().also {
         check(preferences.edit().putString("installationId", it).commit())
     }
