@@ -85,7 +85,7 @@ unavailable, because they wait in the durable queue.
 
 ### POST /v1/sessions — create or resume
 
-Create a new session with a **new secret** for each new RTL reservation, batch, or fresh
+Create a new session with a **new secret** for each new RTL reservation, configuration, or fresh
 installation. Persist the secret together with the response. To resume after an app restart,
 or after a lost response, send the **same body again**: the relay returns the same session and
 repository and never creates a duplicate.
@@ -102,7 +102,7 @@ Request (`Content-Type: application/json`, ≤ 16 KiB):
 }
 ```
 
-- `batch`: APK preset 1–5. The relay uses it for the published batch label.
+- `batch`: stable APK profile ID. Version 2.3 configurations 1–9 send **101–109**, respectively. Legacy IDs **1–5** remain supported with their original v2.2 batch labels. The field name stays `batch` for compatibility; changing an APK profile creates a separate session. The request/response example below uses legacy profile 1.
 - `purpose`: `benchmark` (default) or `synthetic-test`. Test sessions get `-test-` in their
   repository name and a SYNTHETIC banner in the dataset card.
 - `installationId`: lowercase UUID. Its first 8 characters become the `cloudRunId` suffix,

@@ -1,6 +1,6 @@
 name: RTL benchmark session
-description: Register a public session and its hardware/batch assignment.
-title: "RTL session: batch N / device"
+description: Register a public session and its hardware/configuration assignment.
+title: "RTL session: configuration N / device"
 body:
   - type: input
     id: repository
@@ -9,15 +9,19 @@ body:
     validations:
       required: true
   - type: dropdown
-    id: batch
+    id: configuration
     attributes:
-      label: APK batch
+      label: APK configuration
       options:
-        - "1: Energy GPU + LFM Vulkan"
-        - "2: LFM LiteRT GPU + Gemma mobile GPU"
-        - "3: Gemma Q8 GPU + Gemma mobile CPU"
-        - "4: LFM CPU"
-        - "5: Energy int8 CPU + Energy mixed CPU"
+        - "1: Energy-Mobile mixed 4/8-bit · LiteRT-LM GPU"
+        - "2: LFM3 Q4_K_M · Vulkan GPU"
+        - "3: LFM3 mixed4 · LiteRT-LM GPU"
+        - "4: Gemma 4 E2B-IT mixed 2/4/8-bit · LiteRT-LM GPU"
+        - "5: Gemma 4 E2B-IT Q8_0 · Vulkan GPU, if RAM permits"
+        - "6: LFM3 Q4_K_M · llama.cpp CPU"
+        - "7: Energy-Mobile int8 · LiteRT-LM CPU"
+        - "8: Energy-Mobile mixed 4/8-bit · LiteRT-LM CPU"
+        - "9: Gemma 4 E2B-IT mixed 2/4/8-bit · LiteRT-LM CPU"
     validations:
       required: true
   - type: input

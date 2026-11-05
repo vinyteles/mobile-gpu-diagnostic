@@ -19,11 +19,12 @@ class CoordinatorTest {
         val settings = CloudSettings(context)
         val savedToken = settings.token()
         val repository = settings.repository
-        preferences.edit().putInt("batch", -1).putStringSet("configurations", emptySet()).commit()
+        preferences.edit().putInt("batch", 1).putStringSet("configurations", BENCHMARK_CONFIGS.map { it.id }.toSet()).commit()
 
         val switched = Coordinator(context)
 
         assertEquals(BATCH_CONFIG_IDS, switched.selectedIds)
+        assertEquals(1, switched.selectedIds.size)
         assertEquals("downloads", switched.stage)
         assertEquals(run, switched.currentRun)
         assertEquals(state, File(context.filesDir, "queue-benchmark-120-v2.json").takeIf { it.isFile }?.readText())
@@ -33,7 +34,7 @@ class CoordinatorTest {
 
     @Test fun fullQueueRunsEstablishedGpusFirstExportsAndResumesWithoutRepeatingAnswers() {
         val context = ApplicationProvider.getApplicationContext<Context>()
-        val coordinator = Coordinator(context)
+        val coordinator = Coordinator(context, BENCHMARK_CONFIGS)
         context.getSharedPreferences("benchmark-120-v2", Context.MODE_PRIVATE).edit().putStringSet("configurations", BENCHMARK_CONFIGS.map { it.id }.toSet()).commit()
         fun finish() {
             val deadline = System.currentTimeMillis() + 180_000
@@ -60,5 +61,30 @@ class CoordinatorTest {
         finish()
         for (config in BENCHMARK_CONFIGS) assertEquals(originals[config.id], readJson(File(run, "${config.id}.json"))!!.toString())
         assertEquals("completed", readJson(File(run, "queue-state.json"))!!.getString("status"))
+    }
+
+    @Test fun apkRunsOnlyItsConfigurationDespiteOldSelectionsAndResumesIt() {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val preferences = context.getSharedPreferences("benchmark-120-v2", Context.MODE_PRIVATE)
+        preferences.edit().putInt("batch", BuildConfig.BENCHMARK_PROFILE)
+            .putStringSet("configurations", BENCHMARK_CONFIGS.map { it.id }.toSet()).commit()
+        val coordinator = Coordinator(context)
+        fun finish() {
+            val deadline = System.currentTimeMillis() + 60_000
+            while (coordinator.isRunning && System.currentTimeMillis() < deadline) Thread.sleep(100)
+            assertFalse(coordinator.status, coordinator.isRunning)
+        }
+        coordinator.start(newRun = true, smoke = true)
+        finish()
+        val run = checkNotNull(coordinator.currentRun)
+        val records = ReportExporter(context).results(run)
+        assertEquals(1, records.size)
+        assertEquals(APK_CONFIGS.single().id, records.single().getString("id"))
+        assertEquals(120, records.single().getJSONArray("answers").length())
+        assertEquals(setOf(APK_MODELS.single().id), coordinator.downloads.keys)
+        val original = records.single().toString()
+        coordinator.start(smoke = true)
+        finish()
+        assertEquals(original, ReportExporter(context).results(run).single().toString())
     }
 }

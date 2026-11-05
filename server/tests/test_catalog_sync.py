@@ -46,5 +46,9 @@ def test_configurations_match_model_catalog():
 
 def test_batch_names_match():
     source = (KOTLIN / "ModelCatalog.kt").read_text()
-    for number, name in BATCH_NAMES.items():
-        assert f'"{name}"' in source, number
+    for number in range(101, 110):
+        assert f'{number} -> "{BATCH_NAMES[number]}"' in source
+    assert [BATCH_NAMES[number] for number in range(1, 6)] == [
+        "Batch 1 · Previously tested GPUs", "Batch 2 · New LiteRT GPUs",
+        "Batch 3 · Original Gemma", "Batch 4 · LFM3 CPU", "Batch 5 · Energy CPU",
+    ]

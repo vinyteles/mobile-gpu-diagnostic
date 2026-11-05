@@ -11,15 +11,15 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicBoolean
 
 /** One persisted queue: established GPUs, experimental GPUs, then CPUs. */
-class Coordinator(private val context: Context) {
+class Coordinator(private val context: Context, private val configurations: List<BenchmarkConfig> = APK_CONFIGS) {
     private val stopped = AtomicBoolean(false)
     private val active = AtomicBoolean(false)
     private val stateFile = File(context.filesDir, "queue-benchmark-120-v2.json")
     private val preferences = context.getSharedPreferences("benchmark-120-v2", Context.MODE_PRIVATE)
-    val selectedIds: Set<String> get() = preferences.getStringSet("configurations", BATCH_CONFIG_IDS)!!.toSet()
+    val selectedIds: Set<String> get() = configurations.map { it.id }.toSet()
     val downloads = ConcurrentHashMap<String, DownloadProgress>()
     val downloadErrors = ConcurrentHashMap<String, String>()
-    @Volatile var status = "Select configurations, then start. Established GPU configurations always run first."
+    @Volatile var status = "Start to run this APK's configuration on 120 questions."
         private set
     @Volatile var reportStatus = ""
         private set
@@ -48,13 +48,6 @@ class Coordinator(private val context: Context) {
         else if (currentRun != null) status = "Saved run found. Resume keeps completed answers; import a ZIP to continue from another RTL session."
     }
 
-    fun select(id: String, enabled: Boolean) {
-        check(!isRunning)
-        val ids = selectedIds.toMutableSet()
-        if (enabled) ids.add(id) else ids.remove(id)
-        preferences.edit().putStringSet("configurations", ids).apply()
-    }
-
     fun showPreparation() { if (!isRunning) stage = "downloads" }
     fun stop() { stopped.set(true); status = "Stopping. Completed downloads and answers will be kept." }
 
@@ -66,7 +59,7 @@ class Coordinator(private val context: Context) {
             currentRun = imported
             stage = "downloads"
             saveState("stopped")
-            status = "Report imported. Select remaining configurations and resume; completed answers are retained."
+            status = "Report imported. Resume this configuration; completed answers are retained."
         } finally { active.set(false) }
     }
 

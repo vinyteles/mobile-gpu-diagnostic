@@ -11,6 +11,7 @@ import httpx
 from starlette.testclient import TestClient
 
 from server.api import create_app
+from server.catalog import BATCH_NAMES
 from server.store import Store
 from server.tests.conftest import (
     make_settings,
@@ -59,9 +60,24 @@ def test_same_installation_can_hold_several_sessions(client):
     assert one["sessionId"] != two["sessionId"] and one["repository"] != two["repository"]
 
 
+def test_single_configuration_profiles_accept_uploads_and_preserve_legacy_sessions(client):
+    installation = str(uuid.uuid4())
+    legacy, _ = register(client, batch=1, installation=installation)
+    data = make_zip()
+    sessions = []
+    for profile in range(101, 110):
+        session, secret = register(client, batch=profile, installation=installation)
+        assert session["batchName"] == BATCH_NAMES[profile]
+        assert session["sessionId"] != legacy["sessionId"]
+        assert upload(client, session, secret, data).status_code == 202
+        sessions.append(session["sessionId"])
+    assert len(set(sessions)) == 9
+    assert legacy["batchName"] == "Batch 1 · Previously tested GPUs"
+
+
 def test_registration_rejects_weak_or_malformed_input(client):
     good = {"sessionSecret": secrets.token_urlsafe(32), "installationId": str(uuid.uuid4()), "batch": 1, "appVersion": "2.2"}
-    for field, value in [("sessionSecret", "short"), ("installationId", "not-a-uuid"), ("batch", 9), ("batch", True),
+    for field, value in [("sessionSecret", "short"), ("installationId", "not-a-uuid"), ("batch", 9), ("batch", True), ("batch", 101.0), ("batch", 110),
                          ("appVersion", "x" * 50), ("purpose", "other")]:
         response = client.post("/v1/sessions", json=dict(good, **{field: value}))
         assert response.status_code == 400, field

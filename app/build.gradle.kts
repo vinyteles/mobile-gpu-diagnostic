@@ -1,7 +1,7 @@
 plugins { id("com.android.application") }
 
 val benchmarkProfile = providers.gradleProperty("benchmarkProfile").orElse("1").get().toInt()
-require(benchmarkProfile in 1..5)
+require(benchmarkProfile in 1..9)
 
 android {
     namespace = "com.cemig.gpudiagnostic"
@@ -11,11 +11,12 @@ android {
         applicationId = "com.cemig.gpudiagnostic"
         minSdk = 31
         targetSdk = 36
-        versionCode = 8
-        versionName = "2.2"
+        versionCode = 9
+        versionName = "2.3"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-        buildConfigField("int", "BENCHMARK_PROFILE", benchmarkProfile.toString())
-        manifestPlaceholders["benchmarkLabel"] = "CEMIG Benchmark · Batch $benchmarkProfile"
+        // Wire IDs 1–5 remain reserved for the historical multi-configuration APKs.
+        buildConfigField("int", "BENCHMARK_PROFILE", (100 + benchmarkProfile).toString())
+        manifestPlaceholders["benchmarkLabel"] = "CEMIG Benchmark · Config $benchmarkProfile"
         buildConfigField("String", "LITERT_VERSION", "\"0.18.1\"")
         buildConfigField("String", "LLAMA_REVISION", "\"5851a8e505f4d5fbb183f2847698eb6155d176b7\"")
         externalNativeBuild { cmake { arguments += listOf("-DANDROID_STL=c++_shared"); targets += "lfm_diagnostic" } }

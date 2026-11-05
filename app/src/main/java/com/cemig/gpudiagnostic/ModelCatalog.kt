@@ -82,16 +82,18 @@ fun probes(model: ModelSpec) = listOf(
 )
 
 val BENCHMARK_BATCH_NAME = when (BuildConfig.BENCHMARK_PROFILE) {
-    1 -> "Batch 1 · Previously tested GPUs"
-    2 -> "Batch 2 · New LiteRT GPUs"
-    3 -> "Batch 3 · Original Gemma"
-    4 -> "Batch 4 · LFM3 CPU"
-    else -> "Batch 5 · Energy CPU"
+    101 -> "Config 1 · Energy mixed 4/8-bit GPU"
+    102 -> "Config 2 · LFM3 Q4_K_M Vulkan GPU"
+    103 -> "Config 3 · LFM3 LiteRT GPU"
+    104 -> "Config 4 · Gemma 4 E2B-IT mobile GPU"
+    105 -> "Config 5 · Gemma 4 E2B-IT Q8 Vulkan GPU"
+    106 -> "Config 6 · LFM3 Q4_K_M CPU"
+    107 -> "Config 7 · Energy int8 CPU"
+    108 -> "Config 8 · Energy mixed 4/8-bit CPU"
+    109 -> "Config 9 · Gemma 4 E2B-IT mobile CPU"
+    else -> error("Unknown APK configuration")
 }
-val BATCH_CONFIG_IDS = when (BuildConfig.BENCHMARK_PROFILE) {
-    1 -> listOf(0, 1)
-    2 -> listOf(2, 3)
-    3 -> listOf(4, 8)
-    4 -> listOf(5)
-    else -> listOf(6, 7)
-}.map { BENCHMARK_CONFIGS[it].id }.toSet()
+// Each APK exposes and runs exactly one configuration. Keep the full catalog for report imports.
+val APK_CONFIGS = listOf(BENCHMARK_CONFIGS[BuildConfig.BENCHMARK_PROFILE - 101])
+val APK_MODELS = APK_CONFIGS.map { it.model }
+val BATCH_CONFIG_IDS = APK_CONFIGS.map { it.id }.toSet()

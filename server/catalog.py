@@ -22,13 +22,22 @@ CONFIGURATION_MODELS = {
     "gemma-base-mixed248-cpu-replay": "181938105e0eefd105961417e8da75903eacda102c4fce9ce90f50b97139a63c",
 }
 
-# APK preset number -> batch label written to progress.json (BENCHMARK_BATCH_NAME).
+# Stable wire IDs: preserve historical batch labels for existing sessions and APKs.
 BATCH_NAMES = {
     1: "Batch 1 · Previously tested GPUs",
     2: "Batch 2 · New LiteRT GPUs",
     3: "Batch 3 · Original Gemma",
     4: "Batch 4 · LFM3 CPU",
     5: "Batch 5 · Energy CPU",
+    101: "Config 1 · Energy mixed 4/8-bit GPU",
+    102: "Config 2 · LFM3 Q4_K_M Vulkan GPU",
+    103: "Config 3 · LFM3 LiteRT GPU",
+    104: "Config 4 · Gemma 4 E2B-IT mobile GPU",
+    105: "Config 5 · Gemma 4 E2B-IT Q8 Vulkan GPU",
+    106: "Config 6 · LFM3 Q4_K_M CPU",
+    107: "Config 7 · Energy int8 CPU",
+    108: "Config 8 · Energy mixed 4/8-bit CPU",
+    109: "Config 9 · Gemma 4 E2B-IT mobile CPU",
 }
 
 # Fixed members written by ReportExporter.archive(); raw native logs are matched separately.

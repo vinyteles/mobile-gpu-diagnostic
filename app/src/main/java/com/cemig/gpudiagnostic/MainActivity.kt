@@ -13,7 +13,6 @@ import android.os.Handler
 import android.os.Looper
 import android.view.View
 import android.view.WindowManager
-import android.widget.CheckBox
 import android.widget.Button
 import android.widget.LinearLayout
 import android.widget.ScrollView
@@ -34,7 +33,6 @@ class MainActivity : Activity() {
     private var preview = false
     private lateinit var statusText: TextView
     private val modelViews = mutableMapOf<String, Triple<ProgressRing, TextView, TextView>>()
-    private val choices = mutableListOf<CheckBox>()
     private lateinit var action: Button
     private var repeatButton: Button? = null
     private var quickAction: Button? = null
@@ -96,7 +94,7 @@ class MainActivity : Activity() {
     }
 
     private fun buildScreen(stage: String) {
-        shownStage = stage; pipelines.clear(); modelViews.clear(); choices.clear(); repeatButton = null; quickAction = null
+        shownStage = stage; pipelines.clear(); modelViews.clear(); repeatButton = null; quickAction = null
         val content = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL; setPadding(dp(20), dp(20), dp(20), dp(24))
             setBackgroundColor(Color.rgb(245, 248, 246))
@@ -111,22 +109,16 @@ class MainActivity : Activity() {
         if (stage == "downloads") {
             label(content, "Prepare files", 28f, true)
             label(content, "STEP 1 OF 2", 12f, true)
-            label(content, "120 questions per configuration. Select the runs for this RTL session. GPU configurations always run before CPU.")
-            for (config in BENCHMARK_CONFIGS) {
-                val choice = CheckBox(this).apply {
-                    text = config.label + if (config.tested) " · previously tested" else " · new"
-                    isChecked = config.id in coordinator.selectedIds
-                    setTextColor(ink)
-                    setOnCheckedChangeListener { _, checked -> if (!coordinator.isRunning) coordinator.select(config.id, checked) }
-                }
-                choices.add(choice); content.addView(choice)
+            label(content, "120 questions for this APK's configuration. The required model downloads before the benchmark starts.")
+            for (config in APK_CONFIGS) {
+                label(content, config.label + if (config.tested) " · previously tested" else " · new", 16f, true)
             }
-            quickAction = button(content, "Start / resume selected", primary = true) {
+            quickAction = button(content, "Start / resume", primary = true) {
                 if (coordinator.isRunning) coordinator.stop() else coordinator.start(smoke = smoke)
             }
             button(content, "Import previous report ZIP") { chooseReport() }
             label(content, "Required model downloads", 19f, true)
-            for (model in BENCHMARK_MODELS) modelViews[model.id] = progressHeading(card(content), model.label)
+            for (model in APK_MODELS) modelViews[model.id] = progressHeading(card(content), model.label)
             val prompts = progressHeading(card(content), "Questions and references")
             prompts.first.update(1f, completed = true)
             prompts.second.text = "Included in this APK"
@@ -135,8 +127,8 @@ class MainActivity : Activity() {
         } else {
             label(content, "Model benchmark", 28f, true)
             label(content, "STEP 2 OF 2", 12f, true)
-            label(content, "Previously tested GPUs first, then new GPUs, then CPUs. Each configuration saves a report. Keep the latest ZIP before RTL ends.")
-            for (config in BENCHMARK_CONFIGS) {
+            label(content, "This APK runs one configuration. Each answer is saved; reports upload automatically. Keep the latest ZIP before RTL ends.")
+            for (config in APK_CONFIGS) {
                 val backend = config.id
                 val pipeline = card(content)
                 val title = config.label
@@ -163,7 +155,7 @@ class MainActivity : Activity() {
                 getSystemService(ClipboardManager::class.java).setPrimaryClip(ClipData.newPlainText("Model benchmark", coordinator.currentRun?.let { ReportExporter(this).summary(it) } ?: "No results"))
                 Toast.makeText(this, "Metrics copied", Toast.LENGTH_SHORT).show()
             }
-            button(content, "Choose configurations / downloads") { coordinator.showPreparation(); buildScreen(coordinator.stage) }
+            button(content, "Model / downloads") { coordinator.showPreparation(); buildScreen(coordinator.stage) }
             repeatButton = button(content, "Start a new run (keep old reports)") { coordinator.start(newRun = true, smoke = smoke) }
         }
         if (stage != "downloads") button(content, "Import previous report ZIP") { chooseReport() }
@@ -180,10 +172,9 @@ class MainActivity : Activity() {
         statusText.show(listOf(coordinator.status, coordinator.reportStatus, cloud.status).filter { it.isNotBlank() }.joinToString("\n\n"))
         if (shownStage == "downloads") action.show(if (coordinator.isRunning) "Stop" else "Download / resume")
         repeatButton?.isEnabled = !coordinator.isRunning
-        quickAction?.show(if (coordinator.isRunning) "Stop" else "Start / resume selected")
-        choices.forEach { it.isEnabled = !coordinator.isRunning }
+        quickAction?.show(if (coordinator.isRunning) "Stop" else "Start / resume")
         if (shownStage == "downloads") {
-            for (model in BENCHMARK_MODELS) {
+            for (model in APK_MODELS) {
                 val views = modelViews.getValue(model.id)
                 val needed = BENCHMARK_CONFIGS.any { it.model.id == model.id && it.id in coordinator.selectedIds }
                 val progress = coordinator.downloads[model.id] ?: DownloadProgress("waiting", 0, model.bytes)
@@ -192,7 +183,7 @@ class MainActivity : Activity() {
                 views.first.update(fraction, coordinator.isRunning && needed && problem == null && progress.phase in listOf("downloading", "verifying"), progress.phase == "ready", problem != null)
                 views.second.show(when {
                     !needed -> "Not selected"
-                    problem != null -> "Unavailable · other models can continue"
+                    problem != null -> "Unavailable · retry to continue"
                     progress.phase == "ready" -> "Verified and ready"
                     progress.phase == "verifying" -> "Verifying checksum"
                     progress.phase == "downloading" -> "Downloading · ${(fraction * 100).toInt()}%"

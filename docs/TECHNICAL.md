@@ -14,9 +14,11 @@ Each public HF session repository contains:
 - `runs/<run-id>/progress.json` and `runs/<run-id>/latest.zip`: cumulative report.
 - `runs/<run-id>/configurations/<configuration>.zip`: cumulative configuration snapshot.
 
+Wire field `batch` uses IDs 101–109 for configuration APKs 1–9. IDs 1–5 keep their original v2.2 batch meanings, so upgrades create separate upload sessions without relabelling historical data. Reports remain cumulative when continuing the same run across APK updates or importing a report.
+
 Public reports contain questions, retrieved passages, reference answers, generated answers, metrics and device metadata. The phone's scoped capability is encrypted with Android Keystore and excluded from reports. Synthetic transport tests are explicitly labelled and must not be counted as model-quality results.
 
-If a reservation ends, download its latest ZIP to the next device, use **Import previous report ZIP**, and resume the unfinished batch. Original answer/device provenance is preserved. A new device needs model downloads again. Keep a local ZIP backup when possible, especially if uploads are pending.
+If a reservation ends, download its latest ZIP to the next device, use **Import previous report ZIP**, and resume the unfinished configuration. Original answer/device provenance is preserved. A new device needs model downloads again. Keep a local ZIP backup when possible, especially if uploads are pending.
 
 ## Server and monitoring
 
@@ -35,9 +37,9 @@ python scripts/watch-hf-benchmark.py \
 
 Repeat `--repository` for several sessions or use `--sessions-file` with a JSON list of repository names/manifest objects. Public monitoring requires no HF login. It records progress and stale updates locally and does not send chat notifications. Phone/server uploads work independently of the watcher.
 
-Assign batches to colleagues to avoid accidental duplicate work. Keep timings separate by **phone, SoC, RAM, Android version, model hash, runtime version, prompt hash, thermals and engine reuse**. Parallel sessions increase coverage; different hardware is not directly comparable. The four variants of one base question are related observations.
+Assign configurations to colleagues to avoid accidental duplicate work. Keep timings separate by **phone, SoC, RAM, Android version, model hash, runtime version, prompt hash, thermals and engine reuse**. Parallel sessions increase coverage; different hardware is not directly comparable. The four variants of one base question are related observations.
 
-The older `scripts/create-hf-session.py` helper remains available for manually managed datasets; the 2.2 APKs use automatic relay sessions.
+The older `scripts/create-hf-session.py` helper remains available for manually managed datasets; the 2.3 APKs use automatic relay sessions.
 
 ## Protocol
 
@@ -63,16 +65,16 @@ Requirements: JDK 17, Android SDK 36, NDK 27.1.12297006, CMake 3.22.1, and Git. 
 
 ```sh
 ./scripts/prepare-native-deps.sh
-./scripts/build-batch-apks.sh
+./scripts/build-config-apks.sh
 ```
 
-The five ARM64 APKs and checksums appear in `artifacts/batches-2.2/`. Build one preset with `./gradlew -PbenchmarkProfile=1 :app:assembleRelease`. A normal debug build supports x86_64 for emulator tests as well as ARM64.
+The nine ARM64 APKs and checksums appear in `artifacts/configs-2.3/`. Build one configuration with `./gradlew -PbenchmarkProfile=1 :app:assembleRelease`. The build argument is 1–9. Each APK shows and runs only its assigned configuration, ignoring old checkbox selections. A normal debug build supports x86_64 for emulator tests as well as ARM64.
 
 ```sh
 ./gradlew -PbenchmarkProfile=1 :app:assembleDebug :app:assembleDebugAndroidTest :app:lintRelease
 ```
 
-Published batch APKs share one signing key. A locally built APK uses your local debug key and may not update a published installation. No signing keys or account tokens are committed.
+Published configuration APKs share one signing key. A locally built APK uses your local debug key and may not update a published installation. No signing keys or account tokens are committed.
 
 The 120-question fixture is bundled. Regenerating it requires the original local benchmark retrieval outputs and tokenizer inputs; `scripts/build-balanced-replay.py --help` lists those paths. Model weights, native dependency checkouts, build caches and personal report archives are excluded from Git.
 
