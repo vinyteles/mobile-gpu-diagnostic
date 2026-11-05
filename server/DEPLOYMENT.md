@@ -1,6 +1,6 @@
-# Upload relay deployment (h100-eliomar)
+# Upload relay deployment
 
-This is the operator handoff for the relay running on `gpu-h100-3` (user `user_viniciusteles`).
+This guide describes how to deploy and operate the upload relay on a Linux server.
 API contract: [API.md](API.md).
 
 ## Architecture

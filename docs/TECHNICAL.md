@@ -22,7 +22,7 @@ If a reservation ends, download its latest ZIP to the next device, use **Import 
 
 ## Server and monitoring
 
-The CPU-only upload relay is deployed on h100-eliomar. See [server/API.md](../server/API.md) and [server/DEPLOYMENT.md](../server/DEPLOYMENT.md) for its protocol, quotas, tests, credential renewal and operator commands. Its API, HF worker and tunnel run separately from the Claude implementation agent.
+The upload relay runs on a separate server. See [server/API.md](../server/API.md) and [server/DEPLOYMENT.md](../server/DEPLOYMENT.md) for its protocol, quotas, tests, credential renewal and operator commands. Its API, HF worker and tunnel run separately from the Claude implementation agent.
 
 The initial HTTPS ingress uses a **temporary Cloudflare quick tunnel**. The server publishes its current verified URL to the HF index. The APK reads `relay-endpoint.json` from this GitHub repository, then follows the HF discovery document while checking the pinned service identity before sending a session capability. Tunnel changes can therefore be discovered without rebuilding APKs. If the VM, tunnel or HF index is unavailable, local checkpoints remain queued and retry. The server credential currently expires November 26, 2026 and must be renewed by the operator; participants do not manage it.
 

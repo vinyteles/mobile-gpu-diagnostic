@@ -45,7 +45,7 @@ Each prompt includes its previously retrieved MobileRAG+ context. The phone benc
 3. Keep the app visible in the foreground; it prevents normal screen timeout while visible. Avoid locking the phone or switching apps. Expand the configuration to see its metrics.
 4. Before ending the reservation, tap **Stop** if it is still running and wait for **Hugging Face synced**. Use **Report upload status → Copy results link** to share your run, together with the configuration number, phone model and RAM.
 
-**How results are stored:** the cellphone first sends its report checkpoints to our server on **h100-eliomar**. The server uses an **HF access key stored only on the server** to upload them to a separate public Hugging Face dataset for each session. Find the datasets in the **[HF session index](https://huggingface.co/datasets/vinyteles/mobilebench-index)**. Reports include answers, retrieved context, references, timing/memory metrics and device information. **Received by server** means queued; **Hugging Face synced** confirms publication.
+**How results are stored:** the cellphone first sends its report checkpoints to our upload server. The server uses an **HF access key stored only on the server** to upload them to a separate public Hugging Face dataset for each session. Find the datasets in the **[HF session index](https://huggingface.co/datasets/vinyteles/mobilebench-index)**. Reports include answers, retrieved context, references, timing/memory metrics and device information. **Received by server** means queued; **Hugging Face synced** confirms publication.
 
 **Screen sleep, interruptions and recovery**
 
