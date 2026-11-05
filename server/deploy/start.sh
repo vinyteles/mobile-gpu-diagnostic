@@ -9,11 +9,19 @@ environment="env MOBILEBENCH_HOME=$home HF_HOME=$home/hf-home HF_HUB_DISABLE_TEL
 if [ -f "$home/config.toml" ]; then environment="$environment MOBILEBENCH_CONFIG=$home/config.toml"; fi
 supervise="$src/server/deploy/supervise.sh"
 
-if tmux has-session -t "$session" 2>/dev/null; then
-    echo "$session already running"
-    exit 0
+# Create the session and any missing window; running windows are left untouched.
+if ! tmux has-session -t "$session" 2>/dev/null; then
+    tmux new-session -d -s "$session" -n api -c "$src" "$environment $supervise api $home/venv/bin/python -m server.api"
+    echo "started api"
 fi
-tmux new-session -d -s "$session" -n api -c "$src" "$environment $supervise api $home/venv/bin/python -m server.api"
-tmux new-window -t "$session" -n worker -c "$src" "$environment $supervise worker $home/venv/bin/python -m server.worker"
-tmux new-window -t "$session" -n tunnel -c "$src" "$environment $supervise tunnel $src/server/deploy/tunnel.sh"
-echo "started $session"
+windows=$(tmux list-windows -t "$session" -F '#{window_name}')
+for name in api worker tunnel; do
+    echo "$windows" | grep -qx "$name" && continue
+    case $name in
+        api) command="$supervise api $home/venv/bin/python -m server.api" ;;
+        worker) command="$supervise worker $home/venv/bin/python -m server.worker" ;;
+        tunnel) command="$supervise tunnel $src/server/deploy/tunnel.sh" ;;
+    esac
+    tmux new-window -d -t "$session" -n "$name" -c "$src" "$environment $command"
+    echo "started $name"
+done

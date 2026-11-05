@@ -1,12 +1,13 @@
 """API behavior: registration idempotency, isolation, intake validation, limits and the public feed."""
 
+import asyncio
 import hashlib
 import json
 import os
 import secrets
-import threading
 import uuid
 
+import httpx
 from starlette.testclient import TestClient
 
 from server.api import create_app
@@ -204,20 +205,29 @@ def test_public_feed_has_no_capabilities(client):
 
 
 def test_concurrent_independent_sessions(settings, store):
+    """Six participants register and upload concurrently in ONE event loop, as in production."""
     app = create_app(settings, store)
-    results = []
 
-    def participant(index: int) -> None:
-        with TestClient(app) as client:
-            session, secret = register(client, batch=1 + index % 5)
-            for answers in range(1, 4):
-                report = report_document(run_id=f"run-{index}", answers={"gemma-mixed48-gpu-replay": answers})
-                results.append(upload(client, session, secret, make_zip(report)).status_code)
+    async def participant(client: httpx.AsyncClient, index: int) -> list[int]:
+        body = {"sessionSecret": secrets.token_urlsafe(32), "installationId": str(uuid.uuid4()), "batch": 1 + index % 5,
+                "appVersion": "2.2", "purpose": "synthetic-test"}
+        session = (await client.post("/v1/sessions", json=body)).json()
+        codes = []
+        for answers in range(1, 4):
+            data = make_zip(report_document(run_id=f"run-{index}", answers={"gemma-mixed48-gpu-replay": answers}))
+            headers = {"Authorization": f"Bearer {body['sessionSecret']}", "Content-Type": "application/zip",
+                       "X-Content-SHA256": hashlib.sha256(data).hexdigest()}
+            response = await client.post(session["checkpointsUrl"], content=data, headers=headers)
+            codes.append(response.status_code)
+        return codes
 
-    threads = [threading.Thread(target=participant, args=(index,)) for index in range(6)]
-    for thread in threads:
-        thread.start()
-    for thread in threads:
-        thread.join()
-    assert results.count(202) == 18
+    async def run_all() -> list[list[int]]:
+        transport = httpx.ASGITransport(app=app)
+        async with httpx.AsyncClient(transport=transport, base_url="http://relay") as client:
+            return await asyncio.gather(*(participant(client, index) for index in range(6)))
+
+    codes = [code for codes in asyncio.run(run_all()) for code in codes]
+    assert codes == [202] * 18
     assert store.count_sessions() == 6
+    repositories = {row["repository"] for row in store.all_sessions(10)}
+    assert len(repositories) == 6

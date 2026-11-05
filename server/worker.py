@@ -75,6 +75,12 @@ class Publisher:
     def run_forever(self) -> None:
         """Loop until stopped; every step survives Hub outages and restarts."""
         LOGGER.info("worker started")
+        # Verify the credential up front so readiness reflects it before the first upload.
+        try:
+            self.hub.client()
+        except HubError as error:
+            self.credential_error = str(error)
+            LOGGER.error("credential check failed: %s", error)
         while not self.stop.is_set():
             try:
                 self.tick()
