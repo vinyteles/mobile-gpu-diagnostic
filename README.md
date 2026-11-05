@@ -20,6 +20,24 @@ Times are planning estimates for a Galaxy S25 FE-class phone. **The extra 30 min
 
 Downloads are model weights on a fresh phone; each APK adds about 58 MB, and runtime caches need extra storage. Configuration 5 is skipped if available RAM is insufficient.
 
+**Dataset and test sample**
+
+We use [UFGCEMIGONA/benchmark_mobile](https://huggingface.co/datasets/UFGCEMIGONA/benchmark_mobile), pinned to [revision `5a5aa32`](https://huggingface.co/datasets/UFGCEMIGONA/benchmark_mobile/tree/5a5aa32ae4087481be828e071aff169827ec2993). It contains **2,508 Portuguese prompts from 627 base questions**, each with four wording variants. Our fixed evaluation sample contains **30 base questions × 4 variants = 120 prompts per configuration**. All nine configurations receive the same sample in the same order, allowing up to **1,080 generated answers** across the complete test battery.
+
+| Source category | Full dataset prompts | Selected base questions | Test prompts per configuration |
+|---|---:|---:|---:|
+| Regulatory standards (`normas_regulamentadoras`) | 1,536 | 18 | 72 |
+| Internal documents (`documentos_internos`) | 972 | 12 | 48 |
+| **Total** | **2,508** | **30** | **120** |
+
+- **Wording styles:** 30 `clean`, 30 `technical`, 30 `operational`, and 30 `lay` prompts. Each base question appears once in every style, so these are related variants of 30 questions.
+- **Question types:** 32 factual, 32 conditional, 28 procedural, and 28 requiring multiple pieces of evidence (`multievidence`).
+- **Selection:** fixed quotas by source category and question type, with deterministic selection using seed `mobile-bench-120-v2`. Selection does not use model scores or answer quality. Both source files are published under Hugging Face's `train` split; the APK uses the selected subset for evaluation and performs no training.
+
+Each prompt includes its previously retrieved MobileRAG+ context. The phone benchmarks answer generation; retrieval is not rerun. Reference answers and evidence are included for evaluation and are never sent to the model.
+
+**Every sample is traceable.** The public [sample file](app/src/main/assets/rag-replay.json), also included in every report ZIP, preserves the original question and base-question IDs, source category/document, reference answer and evidence, exact retrieved passages with document/chunk identifiers, prompt hashes, dataset revision and input-file checksums. Generated answers carry the question ID and prompt hash, connecting each result to its exact input. The [selection script](scripts/build-balanced-replay.py) documents how the sample was built.
+
 <a id="start-a-session"></a>
 
 1. Use an ARM64 phone with Android 12 or later, or reserve a phone through Samsung RTL using your own account.
