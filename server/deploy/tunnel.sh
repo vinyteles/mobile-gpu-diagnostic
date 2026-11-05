@@ -2,21 +2,21 @@
 # Cloudflare quick tunnel to the loopback API. Writes the active https URL to the endpoint files
 # and exits (so supervise.sh restarts it, with a NEW URL) if the public URL stops answering.
 set -u
-home=${MOBILEBENCH_HOME:?}
+relay_home=${MOBILEBENCH_HOME:?}
 api=http://127.0.0.1:18765
 metrics=127.0.0.1:18766
-endpoint=$home/run/endpoint.txt
+endpoint=$relay_home/run/endpoint.txt
 state_copy=$HOME/.local/state/mobile-upload-agent/endpoint.txt
 
 # 1. Start the outbound-only tunnel; no Cloudflare account, DNS or inbound port is involved.
-"$home/bin/cloudflared" tunnel --no-autoupdate --metrics "$metrics" --url "$api" &
+"$relay_home/bin/cloudflared" tunnel --no-autoupdate --metrics "$metrics" --url "$api" &
 pid=$!
 trap 'kill "$pid" 2>/dev/null; exit 0' TERM INT
 
 # 2. Discover the assigned trycloudflare.com hostname from the local metrics server.
 host=""
 for _ in $(seq 1 90); do
-    host=$(curl -fsS "http://$metrics/quicktunnel" 2>/dev/null | "$home/venv/bin/python" -c 'import json,sys; print(json.load(sys.stdin).get("hostname",""))' 2>/dev/null)
+    host=$(curl -fsS "http://$metrics/quicktunnel" 2>/dev/null | "$relay_home/venv/bin/python" -c 'import json,sys; print(json.load(sys.stdin).get("hostname",""))' 2>/dev/null)
     [ -n "$host" ] && break
     kill -0 "$pid" 2>/dev/null || exit 1
     sleep 2

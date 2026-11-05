@@ -306,25 +306,14 @@ routine checkpoint plus each configuration snapshot in their outbox.
 
 ## Examples
 
-curl:
+Public health checks need no credential:
 
 ```sh
-BASE=$(curl -fsSL https://huggingface.co/datasets/vinyteles/mobilebench-index/resolve/main/endpoint.json | python3 -c 'import json,sys; print(json.load(sys.stdin)["url"])')
-SECRET=$(python3 -c 'import secrets; print(secrets.token_urlsafe(32))')
-curl -fsS "$BASE/v1/health"
-curl -fsS -X POST "$BASE/v1/sessions" -H 'Content-Type: application/json' \
-  -d "{\"sessionSecret\":\"$SECRET\",\"installationId\":\"$(python3 -c 'import uuid; print(uuid.uuid4())')\",\"batch\":1,\"appVersion\":\"2.2\",\"purpose\":\"synthetic-test\"}" \
-  | tee session.json
-SESSION=$(python3 -c 'import json; print(json.load(open("session.json"))["sessionId"])')
-curl -fsS -X POST "$BASE/v1/sessions/$SESSION/checkpoints" \
-  -H "Authorization: Bearer $SECRET" -H 'Content-Type: application/zip' \
-  -H "X-Content-SHA256: $(sha256sum report.zip | cut -d' ' -f1)" \
-  -H "X-Checkpoint-Created-At-Ms: $(date +%s%3N)" --data-binary @report.zip
-curl -fsS -H "Authorization: Bearer $SECRET" "$BASE/v1/sessions/$SESSION"
+curl -fsS https://YOUR-RELAY-HOST/v1/health
 ```
 
-(Passing the secret via `-H` puts it in the process list; this is fine for local testing, but
-production clients send it from memory.)
+Use the Python client below for authenticated validation. It keeps its generated session
+capability in memory rather than shell arguments or command history.
 
 Python: `server/e2e_check.py` is a complete client. It registers (and retries registration),
 uploads a configuration snapshot and a duplicate, checks isolation and malformed-ZIP rejection,

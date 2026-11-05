@@ -536,10 +536,28 @@ def persist_blob(part: Path, blob: Path) -> None:
 
 
 async def read_json(request: Request) -> dict:
-    """Read a small JSON object body."""
-    body = await request.body()
-    if len(body) > MAX_JSON_BODY:
+    """Read a JSON object with size and time bounds before buffering the entire body."""
+    # 1. Reject declared oversize bodies before accepting any bytes.
+    declared = request.headers.get("content-length")
+    if declared is not None and (not declared.isdigit() or int(declared) > MAX_JSON_BODY):
         raise ApiError(413, "body_too_large", "JSON bodies are limited to 16 KiB.")
+
+    # 2. Bound streamed/chunked bodies as they arrive, including clients that never finish.
+    body = bytearray()
+    stream = request.stream().__aiter__()
+    deadline = time.monotonic() + 30
+    while True:
+        try:
+            chunk = await asyncio.wait_for(stream.__anext__(), timeout=max(0.001, min(10, deadline - time.monotonic())))
+        except StopAsyncIteration:
+            break
+        except TimeoutError:
+            raise ApiError(408, "body_timeout", "Session registration was too slow; retry.", True) from None
+        if len(body) + len(chunk) > MAX_JSON_BODY:
+            raise ApiError(413, "body_too_large", "JSON bodies are limited to 16 KiB.")
+        body.extend(chunk)
+
+    # 3. Decode only the bounded payload.
     try:
         value = json.loads(body)
     except (UnicodeDecodeError, json.JSONDecodeError):
