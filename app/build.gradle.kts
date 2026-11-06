@@ -1,7 +1,7 @@
 plugins { id("com.android.application") }
 
 val benchmarkProfile = providers.gradleProperty("benchmarkProfile").orElse("1").get().toInt()
-require(benchmarkProfile in 1..9)
+require(benchmarkProfile in 1..10)
 
 android {
     namespace = "com.cemig.gpudiagnostic"

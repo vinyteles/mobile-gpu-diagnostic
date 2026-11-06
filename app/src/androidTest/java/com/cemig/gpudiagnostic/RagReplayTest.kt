@@ -101,7 +101,8 @@ class RagReplayTest {
         assertTrue(rows.groupBy { it.getString("baseQaId") }.values.all { it.size == 4 })
         assertEquals(listOf("gemma-mixed48", "lfm3-q4km"), BENCHMARK_CONFIGS.take(2).map { it.model.id })
         assertTrue(BENCHMARK_CONFIGS.take(5).all { it.isGpu })
-        assertTrue(BENCHMARK_CONFIGS.drop(5).all { !it.isGpu })
+        assertTrue(BENCHMARK_CONFIGS.subList(5, 9).all { !it.isGpu })
+        assertTrue(BENCHMARK_CONFIGS[9].isGpu && BENCHMARK_CONFIGS[9].model == ENERGY_INT8_RL)
         assertTrue(BENCHMARK_CONFIGS[2].freshEngine)
         assertTrue(BENCHMARK_CONFIGS[4].memoryConditional)
         for (row in rows) {

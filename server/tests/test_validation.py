@@ -59,7 +59,7 @@ def test_imported_cumulative_report_with_all_configurations(tmp_path):
     report = report_document(answers={configuration: 120 for configuration in CONFIGURATION_MODELS}, queue_status="completed")
     report["metadata"]["importedOnDevice"] = {"model": "Other phone"}
     summary = inspect_bytes(tmp_path, make_zip(report))
-    assert summary.completed_answers == 9 * 120 and summary.terminal
+    assert summary.completed_answers == len(CONFIGURATION_MODELS) * 120 and summary.terminal
 
 
 @pytest.mark.skipif(not EXAMPLE_ZIP.exists(), reason="app-generated example not present on this machine")

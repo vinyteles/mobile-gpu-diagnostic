@@ -47,7 +47,7 @@ def test_configurations_match_model_catalog():
 
 def test_batch_names_match():
     source = (KOTLIN / "ModelCatalog.kt").read_text()
-    for number in range(101, 110):
+    for number in range(101, 111):
         assert f'{number} -> "{BATCH_NAMES[number]}"' in source
     assert [BATCH_NAMES[number] for number in range(1, 6)] == [
         "Batch 1 · Previously tested GPUs", "Batch 2 · New LiteRT GPUs",
@@ -57,7 +57,7 @@ def test_batch_names_match():
 
 def test_profiles_map_to_catalog_order_and_legacy_groups():
     ids = list(CONFIGURATION_MODELS)
-    assert {profile: BATCH_CONFIGURATIONS[profile] for profile in range(101, 110)} == {
+    assert {profile: BATCH_CONFIGURATIONS[profile] for profile in range(101, 111)} == {
         101 + index: (configuration,) for index, configuration in enumerate(ids)
     }
     # Pre-split Android BATCH_CONFIG_IDS: 1 -> [0, 1], 2 -> [2, 3], 3 -> [4, 8], 4 -> [5], 5 -> [6, 7].

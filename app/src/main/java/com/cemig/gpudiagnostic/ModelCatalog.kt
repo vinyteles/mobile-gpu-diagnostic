@@ -36,6 +36,9 @@ val LFM_LITERT = ModelSpec("lfm3-mixed4-litert", "LFM3 1.7B · LiteRT mixed 4/8-
 val GEMMA_BASE = ModelSpec("gemma-base-mixed248", "Gemma 4 E2B-IT · mobile 2/4/8-bit",
     "https://huggingface.co/litert-community/gemma-4-E2B-it-litert-lm/resolve/c658da437244f072bf2f1cabc916b60d66d97663/gemma-4-E2B-it.litertlm",
     2588147712L, "181938105e0eefd105961417e8da75903eacda102c4fce9ce90f50b97139a63c")
+val ENERGY_INT8_RL = ModelSpec("gemma-int8-rl", "Gemma Energy int8 RL",
+    "https://storage.googleapis.com/modelo-mobile/models/2026-26-litert_0.94-Gemma4-E2B-RL-3B-dynamic_wi8_afp32.litertlm",
+    2972388640L, "3cb3813fcc54cf8b2e57b55075b0985588e6f6843ea161bdaa31cc7b7c5a1d91")
 val GEMMA_Q8 = ModelSpec("gemma-base-q8", "Gemma 4 E2B-IT · Q8_0 (experimental)",
     "https://huggingface.co/unsloth/gemma-4-E2B-it-GGUF/resolve/0314792d7f1f7e229411f620751375812bb9faf2/gemma-4-E2B-it-Q8_0.gguf",
     5048352864L, "605d3c2647d7c58c1e4b5375ccb5702acf94c2611b4c8d4877812f8fdd32d053", "gguf")
@@ -48,7 +51,8 @@ data class BenchmarkConfig(val model: ModelSpec, val backend: String, val tested
     val label get() = "${model.label} · ${if (backend == "vulkan") "Vulkan GPU" else backend.uppercase()}"
 }
 
-// Established GPU paths first, experimental GPUs next, every CPU configuration last.
+// Established GPU paths first, experimental GPUs next, then CPU. Profiles index this list
+// (BENCHMARK_PROFILE - 101), so later additions are appended to keep existing numbers stable.
 val BENCHMARK_CONFIGS = listOf(
     BenchmarkConfig(MODELS[0], "gpu", tested = true),
     BenchmarkConfig(LFM_MODEL, "vulkan", tested = true),
@@ -59,6 +63,7 @@ val BENCHMARK_CONFIGS = listOf(
     BenchmarkConfig(MODELS[1], "cpu", tested = true),
     BenchmarkConfig(MODELS[0], "cpu", tested = true),
     BenchmarkConfig(GEMMA_BASE, "cpu"),
+    BenchmarkConfig(ENERGY_INT8_RL, "gpu"),
 )
 val BENCHMARK_MODELS = BENCHMARK_CONFIGS.map { it.model }.distinctBy { it.id }
 
@@ -91,6 +96,7 @@ val BENCHMARK_BATCH_NAME = when (BuildConfig.BENCHMARK_PROFILE) {
     107 -> "Config 7 · Energy int8 CPU"
     108 -> "Config 8 · Energy mixed 4/8-bit CPU"
     109 -> "Config 9 · Gemma 4 E2B-IT mobile CPU"
+    110 -> "Config 10 · Energy int8 RL GPU"
     else -> error("Unknown APK configuration")
 }
 // Each APK exposes and runs exactly one configuration. Keep the full catalog for report imports.

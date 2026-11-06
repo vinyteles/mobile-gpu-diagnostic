@@ -22,6 +22,7 @@ body:
         - "7: Energy-Mobile int8 · LiteRT-LM CPU"
         - "8: Energy-Mobile mixed 4/8-bit · LiteRT-LM CPU"
         - "9: Gemma 4 E2B-IT mixed 2/4/8-bit · LiteRT-LM CPU"
+        - "10: Energy-Mobile int8 RL · LiteRT-LM GPU"
     validations:
       required: true
   - type: input

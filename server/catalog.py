@@ -20,6 +20,7 @@ CONFIGURATION_MODELS = {
     "gemma-int8-cpu-replay": "1a4a87c0f00b191cc4136f783e17640cc5ab58fc4c2a0d3ec21348c0b98d2e54",
     "gemma-mixed48-cpu-replay": "63a7374c71b404eb4f8cf8322beca2bc862061cba29adb368131c73e198f59e1",
     "gemma-base-mixed248-cpu-replay": "181938105e0eefd105961417e8da75903eacda102c4fce9ce90f50b97139a63c",
+    "gemma-int8-rl-gpu-replay": "3cb3813fcc54cf8b2e57b55075b0985588e6f6843ea161bdaa31cc7b7c5a1d91",
 }
 
 # Stable wire IDs: preserve historical batch labels for existing sessions and APKs.
@@ -38,10 +39,11 @@ BATCH_NAMES = {
     107: "Config 7 · Energy int8 CPU",
     108: "Config 8 · Energy mixed 4/8-bit CPU",
     109: "Config 9 · Gemma 4 E2B-IT mobile CPU",
+    110: "Config 10 · Energy int8 RL GPU",
 }
 
 # Session `batch` -> configurations that must all reach 120 completed questions before HF publication.
-# Profiles 101..109 run exactly one configuration (CONFIGURATION_MODELS order); legacy groups 1..5
+# Profiles 101..110 run exactly one configuration (CONFIGURATION_MODELS order); legacy groups 1..5
 # keep the pre-split Android BATCH_CONFIG_IDS.
 _IDS = list(CONFIGURATION_MODELS)
 BATCH_CONFIGURATIONS = {
