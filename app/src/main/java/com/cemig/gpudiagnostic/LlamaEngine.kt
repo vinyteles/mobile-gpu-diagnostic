@@ -14,6 +14,9 @@ internal object LlamaNative {
     external fun next(handle: Long): ByteArray?
     external fun metrics(handle: Long): ByteArray
     external fun close(handle: Long)
+    external fun countTokens(handle: Long, text: ByteArray): Int
+    external fun embed(path: ByteArray, text: ByteArray, pooling: Int, contextTokens: Int): FloatArray
+    external fun searchFts(path: ByteArray, query: ByteArray, manual: Boolean, nr: ByteArray): ByteArray
 }
 
 /** Exact text-only, system+user rendering of the pinned LFM3 template with enable_thinking=false. */
@@ -25,7 +28,12 @@ fun lfmPrompt(system: String, user: String): String =
 fun gemmaPrompt(system: String, user: String): String =
     "<bos><|turn>system\n${system.trim()}<turn|>\n<|turn>user\n${user.trim()}<turn|>\n<|turn>model\n"
 
-class LlamaEngine(path: String, backend: String, private val family: String = "lfm") : AutoCloseable {
+interface ToolGenerator {
+    fun countTokens(text: String): Int
+    fun generate(prompt: String, progress: (JSONObject) -> Unit): JSONObject
+}
+
+class LlamaEngine(path: String, backend: String, private val family: String = "lfm") : AutoCloseable, ToolGenerator {
     private val handle: Long
     init {
         require(backend in LFM_BACKENDS) { "Unknown LFM backend: $backend" }
@@ -36,9 +44,16 @@ class LlamaEngine(path: String, backend: String, private val family: String = "l
 
     /** Generate from the same frozen content, measuring template setup, prefill and visible output separately. */
     fun answer(system: String, prompt: String, progress: (JSONObject) -> Unit): JSONObject {
+        return generate(if (family == "gemma") gemmaPrompt(system, prompt) else lfmPrompt(system, prompt), progress)
+    }
+
+    override fun countTokens(text: String): Int = LlamaNative.countTokens(handle, text.toByteArray(Charsets.UTF_8))
+
+    /** Generate one complete assistant turn from an explicitly rendered conversation. */
+    override fun generate(prompt: String, progress: (JSONObject) -> Unit): JSONObject {
         // 1. Format only the two inference messages; reference answers never enter the model.
         val setupStart = SystemClock.elapsedRealtimeNanos()
-        val formatted = (if (family == "gemma") gemmaPrompt(system, prompt) else lfmPrompt(system, prompt)).toByteArray(Charsets.UTF_8)
+        val formatted = prompt.toByteArray(Charsets.UTF_8)
         val hash = MessageDigest.getInstance("SHA-256").digest(formatted).joinToString("") { "%02x".format(it.toInt() and 255) }
         val setupMs = (SystemClock.elapsedRealtimeNanos() - setupStart) / 1_000_000.0
         val start = SystemClock.elapsedRealtimeNanos()

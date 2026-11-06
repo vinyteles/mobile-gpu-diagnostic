@@ -34,10 +34,10 @@ class ReportImporter(private val context: Context) {
         }
         val report = JSONObject(checkNotNull(entries["report.json"]) { "Missing report.json" }.toString(Charsets.UTF_8))
         val metadata = report.getJSONObject("metadata")
-        check(metadata.optString("protocolId") == PROTOCOL_ID) { "Use a version 2.0 / 120-question report." }
+        check(metadata.optString("protocolId") == PROTOCOL_ID) { "Report belongs to a different benchmark protocol; use its matching APK." }
         check(BuildConfig.DEBUG || !metadata.optBoolean("smokeTest")) { "Synthetic test reports are not valid benchmarks." }
         val fixture = checkNotNull(entries["rag-replay.json"]) { "Missing frozen questions." }
-        val bundled = context.assets.open("rag-replay.json").use { it.readBytes() }
+        val bundled = context.assets.open(APK_FIXTURE_ASSET).use { it.readBytes() }
         check(fixture.contentEquals(bundled)) { "Report uses different questions, context, or settings." }
         val hash = java.security.MessageDigest.getInstance("SHA-256").digest(bundled).joinToString("") { "%02x".format(it.toInt() and 255) }
         check(metadata.getString("fixtureSha256") == hash) { "Fixture checksum mismatch." }
@@ -51,6 +51,7 @@ class ReportImporter(private val context: Context) {
             val record = results.getJSONObject(index)
             val config = BENCHMARK_CONFIGS.singleOrNull { it.id == record.optString("id") }
             check(config != null && ids.add(config.id)) { "Unknown or duplicate configuration." }
+            check(config.fixtureAsset == APK_FIXTURE_ASSET) { "Configuration belongs to a different retrieval fixture." }
             check(record.getString("modelSha256") == config.model.sha256) { "Model checksum mismatch." }
             val answers = record.optJSONArray("answers")
             val answered = mutableSetOf<String>()

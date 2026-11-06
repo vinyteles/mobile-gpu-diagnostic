@@ -1,0 +1,122 @@
+[
+  {
+    "id": "qwen-query",
+    "label": "Qwen3 retrieval embeddings",
+    "url": "https://huggingface.co/vinyteles/mobilerag-plus-assets/resolve/5ca76688707bd3ab73cacd3a52fd792bd430bf48/embedders/qwen3-embedding-0.6b-v2-q8_0.gguf",
+    "bytes": 639150592,
+    "sha256": "b35ce0c85e60044049924575ce46aab8b6802b3669cf07739a64b68f49151f9b",
+    "extension": "gguf"
+  },
+  {
+    "id": "granite-scr",
+    "label": "Granite SCR embeddings",
+    "url": "https://huggingface.co/vinyteles/mobilerag-plus-assets/resolve/5ca76688707bd3ab73cacd3a52fd792bd430bf48/embedders/granite-embedding-107m-multilingual-q8_0.gguf",
+    "bytes": 121020096,
+    "sha256": "e61ff8eeedc1ef415747be168999780ab75040268eed66f4c15fce985c42f534",
+    "extension": "gguf"
+  },
+  {
+    "id": "mr-corpus",
+    "label": "MobileRAG+ corpus",
+    "url": "https://huggingface.co/vinyteles/mobilerag-plus-assets/resolve/5ca76688707bd3ab73cacd3a52fd792bd430bf48/benchmark_mobile/corpus.sqlite",
+    "bytes": 31035392,
+    "sha256": "0b5710320b53eea7d2578c94dd9fdc7fcb81197349868d1b58ff1499c42198fb",
+    "extension": "sqlite"
+  },
+  {
+    "id": "mr-eco-vector",
+    "label": "MobileRAG+ eco-vector",
+    "url": "https://huggingface.co/vinyteles/mobilerag-plus-assets/resolve/5ca76688707bd3ab73cacd3a52fd792bd430bf48/benchmark_mobile/eco-vector.sqlite",
+    "bytes": 17039360,
+    "sha256": "8167de1135a2d09f7395d5ccfc3154e873c2d972f94eb05b17606da170d19239",
+    "extension": "sqlite"
+  },
+  {
+    "id": "mr-windows-int8",
+    "label": "MobileRAG+ windows-int8",
+    "url": "https://huggingface.co/vinyteles/mobilerag-plus-assets/resolve/5ca76688707bd3ab73cacd3a52fd792bd430bf48/benchmark_mobile/windows-int8.sqlite",
+    "bytes": 34103296,
+    "sha256": "4c897cbc6217f2c57b9fea080045ea5a0c86ed8c5c504ba95bcf71d29faacae3",
+    "extension": "sqlite"
+  },
+  {
+    "id": "f6-config-json",
+    "label": "F6 config.json",
+    "url": "https://huggingface.co/datasets/juniorrios/cemig-nr-retrieval-assets/resolve/14753134e76c95bff4d594e24550cfb0f0271f2a/config.json",
+    "bytes": 2174,
+    "sha256": "88464f132eaf82b3d866b69007120e5a4b31c4ea0c12dad63bc2e08505389940",
+    "extension": "json"
+  },
+  {
+    "id": "f6-index-db",
+    "label": "F6 index.db",
+    "url": "https://huggingface.co/datasets/juniorrios/cemig-nr-retrieval-assets/resolve/14753134e76c95bff4d594e24550cfb0f0271f2a/index.db",
+    "bytes": 19099648,
+    "sha256": "23744916a08eaebe816d8c277f82ac9be47fef1cd72a7d1a58762a045b8560e6",
+    "extension": "db"
+  },
+  {
+    "id": "f6-manuals-db",
+    "label": "F6 manuals.db",
+    "url": "https://huggingface.co/datasets/juniorrios/cemig-nr-retrieval-assets/resolve/14753134e76c95bff4d594e24550cfb0f0271f2a/manuals.db",
+    "bytes": 4980736,
+    "sha256": "3a163eb90ebd0cc0a9dbdab9af699f23215e2748eb93e3ce5e4a2412a7c0b298",
+    "extension": "db"
+  },
+  {
+    "id": "f6-dense-text-bin",
+    "label": "F6 dense_text.bin",
+    "url": "https://huggingface.co/datasets/juniorrios/cemig-nr-retrieval-assets/resolve/14753134e76c95bff4d594e24550cfb0f0271f2a/dense_text.bin",
+    "bytes": 6773365,
+    "sha256": "0412372a71713fef5e9b3727723e52e6e23d65ed55017cbd43692f9e5fd99e8d",
+    "extension": "bin"
+  },
+  {
+    "id": "f6-dense-exponly-bin",
+    "label": "F6 dense_exponly.bin",
+    "url": "https://huggingface.co/datasets/juniorrios/cemig-nr-retrieval-assets/resolve/14753134e76c95bff4d594e24550cfb0f0271f2a/dense_exponly.bin",
+    "bytes": 6773365,
+    "sha256": "7e2d25b48e2ceb4ed07bcd158f7208ba2ac208f94c84471686784964f64feaee",
+    "extension": "bin"
+  },
+  {
+    "id": "f6-manuals-dense-npz",
+    "label": "F6 manuals_dense.npz",
+    "url": "https://huggingface.co/datasets/juniorrios/cemig-nr-retrieval-assets/resolve/14753134e76c95bff4d594e24550cfb0f0271f2a/manuals_dense.npz",
+    "bytes": 3363860,
+    "sha256": "45243e952b7ca7fc2667d6dd6e7d486aa84ecebb4f050c056d31851a388bd6c3",
+    "extension": "npz"
+  },
+  {
+    "id": "f6-units-json",
+    "label": "F6 units.json",
+    "url": "https://huggingface.co/datasets/juniorrios/cemig-nr-retrieval-assets/resolve/14753134e76c95bff4d594e24550cfb0f0271f2a/units.json",
+    "bytes": 1300465,
+    "sha256": "5e9c8a86a8934e47f3d3b1f4e8db99fc34f7681897cb29a50df3b71031b787e7",
+    "extension": "json"
+  },
+  {
+    "id": "f6-units-win3-f16-npy",
+    "label": "F6 units_win3.f16.npy",
+    "url": "https://huggingface.co/datasets/juniorrios/cemig-nr-retrieval-assets/resolve/14753134e76c95bff4d594e24550cfb0f0271f2a/units_win3.f16.npy",
+    "bytes": 56621696,
+    "sha256": "28447c84f83178c1922ae91de9c0bde2aa185a75c8d7c85a871a8e7523564fc1",
+    "extension": "npy"
+  },
+  {
+    "id": "f6-nr-classifier-bin",
+    "label": "F6 nr_classifier.bin",
+    "url": "https://huggingface.co/datasets/juniorrios/cemig-nr-retrieval-assets/resolve/14753134e76c95bff4d594e24550cfb0f0271f2a/nr_classifier.bin",
+    "bytes": 4030439,
+    "sha256": "778db84cc32f12fb2328cc7782c2f01a58d6d3c4d0de42a6471ab47717e3dd0c",
+    "extension": "bin"
+  },
+  {
+    "id": "f6-embedder",
+    "label": "EmbeddingGemma retrieval embeddings",
+    "url": "https://huggingface.co/ggml-org/embeddinggemma-300M-qat-q4_0-GGUF/resolve/8dd0ca2a66a8f14470acb0e2a71f801afbc5fb73/embeddinggemma-300M-qat-Q4_0.gguf",
+    "bytes": 277852192,
+    "sha256": "50d28e22432a148f6f8a86eab3700f92add5d1f54baf7790675a2a4dadbccf26",
+    "extension": "gguf"
+  }
+]

@@ -35,8 +35,9 @@ class CoordinatorTest {
     @Test fun fullQueueRunsEstablishedGpusFirstExportsAndResumesWithoutRepeatingAnswers() {
         val context = ApplicationProvider.getApplicationContext<Context>()
         // The separate single-configuration test exercises per-question export at release settings.
-        val coordinator = Coordinator(context, BENCHMARK_CONFIGS, reportEachQuestion = false)
-        context.getSharedPreferences("benchmark-120-v2", Context.MODE_PRIVATE).edit().putStringSet("configurations", BENCHMARK_CONFIGS.map { it.id }.toSet()).commit()
+        val configs = BENCHMARK_CONFIGS.filter { it.fixtureAsset == APK_FIXTURE_ASSET }
+        val coordinator = Coordinator(context, configs, reportEachQuestion = false)
+        context.getSharedPreferences("benchmark-120-v2", Context.MODE_PRIVATE).edit().putStringSet("configurations", configs.map { it.id }.toSet()).commit()
         fun finish() {
             val deadline = System.currentTimeMillis() + 600_000
             while (coordinator.isRunning && System.currentTimeMillis() < deadline) Thread.sleep(100)
@@ -45,22 +46,22 @@ class CoordinatorTest {
         coordinator.start(newRun = true, smoke = true)
         finish()
         val run = checkNotNull(coordinator.currentRun)
-        val originals = BENCHMARK_CONFIGS.associate { config ->
+        val originals = configs.associate { config ->
             val result = checkNotNull(readJson(File(run, "${config.id}.json")))
             assertEquals(result.toString(), "completed", result.getString("status"))
             assertEquals(120, result.getJSONArray("answers").length())
             assertEquals(1, result.getJSONArray("engineSessions").length())
             config.id to result.toString()
         }
-        val records = BENCHMARK_CONFIGS.map { checkNotNull(readJson(File(run, "${it.id}.json"))) }
+        val records = configs.map { checkNotNull(readJson(File(run, "${it.id}.json"))) }
         for (index in 1 until records.size) assertTrue(records[index].getLong("startedAtMs") >= records[index - 1].getLong("finishedAtMs"))
         assertTrue(coordinator.reportStatus, coordinator.reportStatus.startsWith("Latest report saved"))
         val archive = ReportExporter(context).archive(run)
         val imported = archive.inputStream().use { ReportImporter(context).restore(it) }
-        assertEquals(9, ReportExporter(context).results(imported).size)
+        assertEquals(configs.size, ReportExporter(context).results(imported).size)
         coordinator.start(smoke = true)
         finish()
-        for (config in BENCHMARK_CONFIGS) assertEquals(originals[config.id], readJson(File(run, "${config.id}.json"))!!.toString())
+        for (config in configs) assertEquals(originals[config.id], readJson(File(run, "${config.id}.json"))!!.toString())
         assertEquals("completed", readJson(File(run, "queue-state.json"))!!.getString("status"))
     }
 
@@ -82,7 +83,7 @@ class CoordinatorTest {
         assertEquals(1, records.size)
         assertEquals(APK_CONFIGS.single().id, records.single().getString("id"))
         assertEquals(120, records.single().getJSONArray("answers").length())
-        assertEquals(setOf(APK_MODELS.single().id), coordinator.downloads.keys)
+        assertEquals(requiredArtifacts(context, APK_CONFIGS.single()).map { it.id }.toSet(), coordinator.downloads.keys)
         val original = records.single().toString()
         coordinator.start(smoke = true)
         finish()

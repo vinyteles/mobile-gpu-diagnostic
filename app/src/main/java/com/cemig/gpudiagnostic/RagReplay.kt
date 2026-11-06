@@ -11,7 +11,7 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicReference
 
 /** Freeze inputs once; a new conversation per question shares the same initialized engine. */
-fun replayDataset(context: Context): JSONObject = context.assets.open("rag-replay.json").bufferedReader().use { JSONObject(it.readText()) }
+fun replayDataset(context: Context): JSONObject = context.assets.open(APK_FIXTURE_ASSET).bufferedReader().use { JSONObject(it.readText()) }
 
 /** Structural citation checks do not assess whether a passage supports a claim. */
 fun citationCheck(answer: String, sources: JSONArray): JSONObject {
@@ -117,6 +117,8 @@ fun runReplay(context: Context, engine: Engine?, result: JSONObject, checkpoint:
     check(selected == null || selected.all { id -> (0 until questions.length()).any { questions.getJSONObject(it).getString("id") == id } }) { "Unknown selected question ID" }
     result.put("totalQuestions", indices.size)
     var sessionIndex = 0
+    val liveConfig = BENCHMARK_CONFIGS.firstOrNull { it.id == result.optString("id") && it.liveTools }
+    val toolConversation = if (llama != null && liveConfig != null) ToolConversation(context, liveConfig, llama) else null
 
     // 2. Replay verbatim prompts, persisting each completed answer before advancing.
     for ((ordinal, index) in indices.withIndex()) {
@@ -152,7 +154,8 @@ fun runReplay(context: Context, engine: Engine?, result: JSONObject, checkpoint:
                     live.keys().forEach { key -> entry.put(key, live.get(key)) }
                     checkpoint("generating")
                 }
-                if (llama != null) llama.answer(dataset.getString("systemPrompt"), question.getString("prompt"), progress)
+                if (toolConversation != null) toolConversation.answer(dataset.getString("systemPrompt"), question.getString("question"), progress)
+                else if (llama != null) llama.answer(dataset.getString("systemPrompt"), question.getString("prompt"), progress)
                 else if (freshEngineFactory != null) {
                     checkpoint("engine_initializing")
                     val loadStart = SystemClock.elapsedRealtimeNanos()
@@ -187,7 +190,7 @@ fun runReplay(context: Context, engine: Engine?, result: JSONObject, checkpoint:
                 .put("endToFirstTextMs", entry.optDouble("questionToFirstTextMs").takeIf { it.isFinite() }?.let { it + entry.optDouble("engineLoadMs", 0.0) } ?: JSONObject.NULL)
                 .put("endToEndMs", entry.optDouble("engineLoadMs", 0.0) + entry.optDouble("questionMs", 0.0) + entry.optDouble("engineCloseMs", 0.0))
                 .put("observedQuestionWallMs", System.currentTimeMillis() - entry.getLong("startedAtMs"))
-                .put("citations", citationCheck(entry.getString("answer"), question.getJSONArray("sources")))
+                .put("citations", citationCheck(entry.getString("answer"), entry.optJSONArray("sources") ?: question.getJSONArray("sources")))
                 .put("finishedAtMs", System.currentTimeMillis())
             sessionIndex++
             session.put("completedQuestions", sessionIndex).put("device", deviceInfo(context)).put("finishedAtMs", System.currentTimeMillis())
@@ -195,9 +198,11 @@ fun runReplay(context: Context, engine: Engine?, result: JSONObject, checkpoint:
         } catch (error: Throwable) {
             entry.put("status", "error").put("error", error.toString())
             checkpoint("question_failed")
+            toolConversation?.close()
             throw error // Reusing a failed native conversation is unsafe; other configurations still run.
         }
     }
     session.put("finishedAtMs", System.currentTimeMillis())
+    toolConversation?.close()
     checkpoint("engine_closing")
 }

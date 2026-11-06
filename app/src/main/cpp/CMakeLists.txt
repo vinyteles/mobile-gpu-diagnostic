@@ -30,7 +30,10 @@ add_subdirectory("${DEPS}/llama.cpp" llama)
 
 # 2. Expose bounded, single-thread-owned inference calls to the disposable worker process.
 add_library(lfm_diagnostic SHARED lfm_jni.cpp)
+add_library(benchmark_sqlite STATIC "${DEPS}/sqlite/sqlite3.c")
+target_compile_definitions(benchmark_sqlite PRIVATE SQLITE_ENABLE_FTS5 SQLITE_THREADSAFE=1)
+target_include_directories(lfm_diagnostic PRIVATE "${DEPS}/sqlite")
 target_compile_features(lfm_diagnostic PRIVATE cxx_std_17)
 target_include_directories(lfm_diagnostic PRIVATE "${DEPS}/llama.cpp/vendor")
-target_link_libraries(lfm_diagnostic PRIVATE llama android log)
+target_link_libraries(lfm_diagnostic PRIVATE llama benchmark_sqlite android log)
 target_link_options(lfm_diagnostic PRIVATE "-Wl,-z,max-page-size=16384")

@@ -19,10 +19,12 @@ from pathlib import Path
 from server.catalog import (
     BATCH_CONFIGURATIONS,
     CONFIGURATION_MODELS,
+    CONFIGURATION_FIXTURES,
     FIXED_MEMBERS,
     FIXTURE_SHA256,
     LOG_MEMBER,
     PROTOCOL_ID,
+    PROTOCOL_FIXTURES,
     QUESTION_COUNT,
     TERMINAL_QUEUE_STATES,
 )
@@ -31,7 +33,7 @@ from server.config import Limits
 RUN_ID = re.compile(r"[A-Za-z0-9_-]{1,80}")
 MAX_DEVICE_JSON_BYTES = 32 * 1024
 # Fixture question id -> position, parsed once from the first verified rag-replay.json.
-_QUESTION_INDEX: dict[str, int] = {}
+_QUESTION_INDEX: dict[str, dict[str, int]] = {}
 
 
 class ReportRejected(Exception):
@@ -110,14 +112,15 @@ def inspect_archive(path: Path, limits: Limits) -> ReportSummary:
     # 3. Require the frozen benchmark inputs, byte-identical to the app asset.
     if "rag-replay.json" not in contents:
         raise ReportRejected("missing_fixture", "rag-replay.json is required.")
-    if hashlib.sha256(contents["rag-replay.json"]).hexdigest() != FIXTURE_SHA256:
+    fixture_hash = hashlib.sha256(contents["rag-replay.json"]).hexdigest()
+    if fixture_hash not in PROTOCOL_FIXTURES.values():
         raise ReportRejected("fixture_mismatch", "rag-replay.json does not match the frozen benchmark fixture.")
     if "report.json" not in contents:
         raise ReportRejected("missing_report", "report.json is required.")
 
     # 4. Validate report.json against the protocol and configuration catalog.
     question_index = fixture_question_index(contents["rag-replay.json"])
-    summary = summarize_report(contents["report.json"], question_index)
+    summary = summarize_report(contents["report.json"], question_index, fixture_hash)
     summary.uncompressed_bytes = total
     return summary
 
@@ -130,13 +133,14 @@ def fixture_question_index(fixture: bytes) -> dict[str, int]:
     Returns:
         Mapping with QUESTION_COUNT entries, e.g. {"85ddfcebb34fe97a5567bb69": 0, ...}.
     """
-    if not _QUESTION_INDEX:
+    digest = hashlib.sha256(fixture).hexdigest()
+    if digest not in _QUESTION_INDEX:
         questions = json.loads(fixture)["questions"]
         index = {question["id"]: position for position, question in enumerate(questions)}
         if len(index) != QUESTION_COUNT:
             raise RuntimeError("the frozen fixture does not list exactly QUESTION_COUNT distinct questions")
-        _QUESTION_INDEX.update(index)
-    return _QUESTION_INDEX
+        _QUESTION_INDEX[digest] = index
+    return _QUESTION_INDEX[digest]
 
 
 def assess_completion(completed_questions: dict[str, int], batch: int) -> Completion:
@@ -210,7 +214,7 @@ def read_member(archive: zipfile.ZipFile, info: zipfile.ZipInfo, limits: Limits,
     return (b"".join(chunks) if keep else None), size
 
 
-def summarize_report(raw: bytes, question_index: dict[str, int]) -> ReportSummary:
+def summarize_report(raw: bytes, question_index: dict[str, int], fixture_hash: str = FIXTURE_SHA256) -> ReportSummary:
     """Parse report.json and compute progress rows exactly like CloudUploader.progress().
 
     Args:
@@ -234,9 +238,9 @@ def summarize_report(raw: bytes, question_index: dict[str, int]) -> ReportSummar
         raise ReportRejected("invalid_report", "report.json has malformed results, queue or preparation.")
 
     # 2. Check protocol, fixture digest and run identity.
-    if metadata.get("protocolId") != PROTOCOL_ID:
-        raise ReportRejected("protocol_mismatch", f"Only protocol {PROTOCOL_ID} is accepted.")
-    if metadata.get("fixtureSha256") != FIXTURE_SHA256:
+    if metadata.get("protocolId") not in PROTOCOL_FIXTURES:
+        raise ReportRejected("protocol_mismatch", "Unknown benchmark protocol.")
+    if metadata.get("fixtureSha256") != fixture_hash or PROTOCOL_FIXTURES[metadata["protocolId"]] != fixture_hash:
         raise ReportRejected("fixture_mismatch", "metadata.fixtureSha256 does not match the frozen fixture.")
     run_id = metadata.get("runId")
     if not isinstance(run_id, str) or not RUN_ID.fullmatch(run_id):
@@ -252,6 +256,8 @@ def summarize_report(raw: bytes, question_index: dict[str, int]) -> ReportSummar
     completed_total = 0
     for record in results:
         row, bitmap = summarize_configuration(record, seen, question_index)
+        if CONFIGURATION_FIXTURES[row["id"]] != fixture_hash:
+            raise ReportRejected("fixture_mismatch", "Configuration uses a different retrieval protocol.")
         rows.append(row)
         completed_questions[row["id"]] = bitmap
         completed_total += row["completed"]

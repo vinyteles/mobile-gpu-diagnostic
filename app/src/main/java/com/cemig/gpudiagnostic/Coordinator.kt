@@ -15,7 +15,8 @@ class Coordinator(private val context: Context, private val configurations: List
                   private val reportEachQuestion: Boolean = true) {
     private val stopped = AtomicBoolean(false)
     private val active = AtomicBoolean(false)
-    private val stateFile = File(context.filesDir, "queue-benchmark-120-v2.json")
+    private val stateFile = File(context.filesDir, if (APK_FIXTURE_ASSET == "rag-replay.json")
+        "queue-benchmark-120-v2.json" else "queue-benchmark-120-tools-v1.json")
     private val preferences = context.getSharedPreferences("benchmark-120-v2", Context.MODE_PRIVATE)
     val selectedIds: Set<String> get() = configurations.map { it.id }.toSet()
     val downloads = ConcurrentHashMap<String, DownloadProgress>()
@@ -76,9 +77,18 @@ class Coordinator(private val context: Context, private val configurations: List
                 if (newRun || currentRun == null) currentRun = File(context.filesDir, "runs/bench120-${System.currentTimeMillis()}")
                 val run = currentRun!!.apply { mkdirs() }
                 val fixtureFile = File(run, "rag-replay.json")
-                val bundled = context.assets.open("rag-replay.json").use { it.readBytes() }
+                check(configs.all { it.fixtureAsset == APK_FIXTURE_ASSET }) { "A run must use a single retrieval fixture." }
+                val bundled = context.assets.open(APK_FIXTURE_ASSET).use { it.readBytes() }
                 if (!fixtureFile.exists()) fixtureFile.writeBytes(bundled)
                 val fixtureHash = java.security.MessageDigest.getInstance("SHA-256").digest(bundled).joinToString("") { "%02x".format(it.toInt() and 255) }
+                if (configurations.first().liveTools) {
+                    val data = replayDataset(context)
+                    for ((asset, field) in listOf("retrieval-artifacts.json" to "retrievalArtifactsSha256", "mobilerag-sentence-spans.json" to "sentenceSpansSha256", "f6-stopwords.json" to "f6StopwordsSha256")) {
+                        val bytes = context.assets.open(asset).use { it.readBytes() }
+                        val hash = java.security.MessageDigest.getInstance("SHA-256").digest(bytes).joinToString("") { "%02x".format(it.toInt() and 255) }
+                        check(hash == data.getString(field)) { "Retrieval asset changed: $asset" }
+                    }
+                }
                 check(sha256(fixtureFile) == fixtureHash) { "Fixture changed; start a new run." }
                 val previous = readJson(File(run, "metadata.json"))
                 val synthetic = previous?.optBoolean("smokeTest") ?: (BuildConfig.DEBUG && smoke)
@@ -87,7 +97,11 @@ class Coordinator(private val context: Context, private val configurations: List
                     .put("runId", run.name).put("startedAtMs", System.currentTimeMillis()).put("device", deviceInfo(context))
                     .put("smokeTest", synthetic).put("fixtureSha256", fixtureHash).put("runtime", "LiteRT-LM + llama.cpp")
                     .put("litertVersion", BuildConfig.LITERT_VERSION).put("llamaRevision", BuildConfig.LLAMA_REVISION)
-                    .put("scope", "120 frozen MobileRAG+ retrieval prompts per configuration; generation only; 30 base questions in four wording categories.")
+                    .put("scope", replayDataset(context).getString("scope"))
+                    .put("retrievalMode", if (configurations.first().liveTools) "on-device model-controlled tools" else "frozen replay")
+                    .put("retrievalArtifacts", JSONArray(if (configurations.first().liveTools) (retrievalArtifacts(context, "mobileragplus") + retrievalArtifacts(context, "f6")).map {
+                        JSONObject().put("id", it.id).put("url", it.url).put("sha256", it.sha256).put("bytes", it.bytes)
+                    } else emptyList<JSONObject>()))
                     .put("settings", replayDataset(context).getJSONObject("settings"))
                     .put("timingPolicy", "One engine per configuration/session except LFM LiteRT: new engine per question to reset recurrent state. Per-question load/close overhead is recorded separately and included in endToEndMs. No cross-question conversations; model-specific templates. After each completed question a cumulative ZIP is queued before the next question starts; network uploads run asynchronously. Additional snapshots are queued every 60 seconds while waiting, on stop and at configuration end. Server publishes to HF only after all assigned questions are complete. Wall timing includes checkpoint/export overhead. Fixed order, not thermally counterbalanced.")
                     .put("backendPolicy", "Exact requested backend; no app CPU fallback. Native operators can still use CPU. Q8 GPU requires model bytes plus 768 MiB available RAM before loading; otherwise skipped with evidence.")
@@ -107,7 +121,7 @@ class Coordinator(private val context: Context, private val configurations: List
                 val pending = configs.filter { readJson(File(run, "${it.id}.json"))?.optString("status") != "completed" }
                 val files = mutableMapOf<String, File>()
                 val preparation = readJson(File(run, "preparation.json")) ?: JSONObject()
-                for (model in pending.map { it.model }.distinctBy { it.id }) {
+                for (model in pending.flatMap { requiredArtifacts(context, it) }.distinctBy { it.id }) {
                     if (stopped.get()) throw CancellationException()
                     try {
                         if (model == GEMMA_Q8 && !synthetic) memorySkipReason()?.let { error(it) }
@@ -137,8 +151,9 @@ class Coordinator(private val context: Context, private val configurations: List
                     if (existing?.optString("status") == "completed") continue
                     activeBackend = config.id
                     val record = existing ?: JSONObject().put("id", config.id).put("model", config.model.id)
+                        .put("retrieval", config.retrieval).put("matrixCase", config.matrixCase)
                         .put("modelSha256", config.model.sha256).put("requestedBackend", config.backend)
-                        .put("workload", "rag-replay").put("runtime", config.runtime).put("startedAtMs", System.currentTimeMillis())
+                        .put("workload", if (config.liveTools) "rag-tools" else "rag-replay").put("runtime", config.runtime).put("startedAtMs", System.currentTimeMillis())
                     record.put("status", "pending").put("phase", "connecting").put("totalQuestions", QUESTION_COUNT)
                         .put("freshEnginePerQuestion", config.freshEngine)
                     listOf("controllerError", "controllerOutcome", "failedPhase", "error", "stackTrace").forEach { record.remove(it) }
@@ -152,7 +167,7 @@ class Coordinator(private val context: Context, private val configurations: List
                         .put("cacheBytes", cachedBytes).put("requiredFreeBytes", requiredStorage))
                     val storageReason = if (!synthetic && config.runtime == "LiteRT-LM" && availableStorage < requiredStorage)
                         "Not enough storage for runtime caches: ${availableStorage / 1_000_000} MB free; reserve ${requiredStorage / 1_000_000} MB. Free space and Resume." else null
-                    val problem = memoryReason ?: downloadErrors[config.model.id] ?: storageReason
+                    val problem = memoryReason ?: requiredArtifacts(context, config).firstNotNullOfOrNull { downloadErrors[it.id] } ?: storageReason
                     if (problem != null || files[config.model.id] == null) {
                         record.put("status", if (memoryReason != null) "skipped" else "error").put("phase", "preparation_failed")
                             .put("error", problem ?: "Model file unavailable").put("memory", memorySnapshot(context))

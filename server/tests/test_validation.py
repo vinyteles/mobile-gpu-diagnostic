@@ -56,7 +56,7 @@ def test_preparation_report_without_results(tmp_path):
 
 def test_imported_cumulative_report_with_all_configurations(tmp_path):
     from server.catalog import CONFIGURATION_MODELS
-    report = report_document(answers={configuration: 120 for configuration in CONFIGURATION_MODELS}, queue_status="completed")
+    report = report_document(answers={configuration: 120 for configuration in CONFIGURATION_MODELS if not configuration.endswith("-tools-v1")}, queue_status="completed")
     report["metadata"]["importedOnDevice"] = {"model": "Other phone"}
     summary = inspect_bytes(tmp_path, make_zip(report))
     assert summary.completed_answers == 9 * 120 and summary.terminal
@@ -161,15 +161,17 @@ def test_completion_counts_distinct_completed_fixture_questions(tmp_path):
 
 
 def test_completion_uses_only_assigned_configurations(tmp_path):
-    every = {configuration: 120 for configuration in CONFIGURATION_MODELS}
+    every = {configuration: 120 for configuration in CONFIGURATION_MODELS if not configuration.endswith("-tools-v1")}
     summary = inspect_bytes(tmp_path, make_zip(report_document(answers=every)))
     for batch, assigned in BATCH_CONFIGURATIONS.items():
+        if batch >= 110:
+            continue
         assert assess_completion(summary.completed_questions, batch).complete, batch
         # Dropping one question of one assigned configuration blocks completion for that batch only.
         partial = dict(summary.completed_questions, **{assigned[-1]: summary.completed_questions[assigned[-1]] >> 1})
         completion = assess_completion(partial, batch)
         assert not completion.complete and completion.saved_answers == completion.required_answers - 1
-    imported_only = {configuration: 120 for configuration in CONFIGURATION_MODELS if configuration != "lfm3-q4km-cpu-replay"}
+    imported_only = {configuration: 120 for configuration in CONFIGURATION_MODELS if configuration != "lfm3-q4km-cpu-replay" and not configuration.endswith("-tools-v1")}
     summary = inspect_bytes(tmp_path, make_zip(report_document(answers=imported_only, queue_status="completed")))
     assert assess_completion(summary.completed_questions, 106) == Completion(0, 120, False)
 

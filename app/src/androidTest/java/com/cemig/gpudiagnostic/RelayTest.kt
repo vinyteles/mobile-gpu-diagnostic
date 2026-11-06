@@ -20,7 +20,7 @@ class RelayTest {
     private fun report(questionLimit: Int = QUESTION_COUNT): Pair<File, File> {
         val run = File(context.cacheDir, "relaytest-${System.nanoTime()}").apply { mkdirs() }
         val fixture = File(run, "rag-replay.json")
-        context.assets.open("rag-replay.json").use { input -> fixture.outputStream().use { input.copyTo(it) } }
+        context.assets.open(APK_FIXTURE_ASSET).use { input -> fixture.outputStream().use { input.copyTo(it) } }
         writeJson(File(run, "metadata.json"), JSONObject().put("runId", run.name).put("protocolId", PROTOCOL_ID)
             .put("fixtureSha256", sha256(fixture)).put("smokeTest", true).put("device", deviceInfo(context)))
         writeJson(File(run, "queue-state.json"), JSONObject().put("status", if (questionLimit == QUESTION_COUNT) "completed" else "running").put("stage", "benchmark"))

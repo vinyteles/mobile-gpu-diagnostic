@@ -50,7 +50,13 @@ class ReportExporter(private val context: Context) {
                         append("$label: median first text %.2f s (${group.size} questions)\n".format(it / 1000))
                     }
                 }
-                median(completed.map { it.optDouble("questionMs") })?.let { append("Median generation + setup: %.2f s\n".format(it / 1000)) }
+                median(completed.map { it.optDouble("questionMs") })?.let { append("Median question pipeline: %.2f s\n".format(it / 1000)) }
+                if (result.optString("workload") == "rag-tools") {
+                    median(completed.map { it.optDouble("toolDecisionMs") })?.let { append("Median tool decisions: %.2f s\n".format(it / 1000)) }
+                    median(completed.map { it.optDouble("retrievalMs") })?.let { append("Median retrieval incl. query embeddings: %.2f s\n".format(it / 1000)) }
+                    median(completed.map { it.optDouble("finalGenerationMs") })?.let { append("Median final answer generation: %.2f s\n".format(it / 1000)) }
+                    append("No final answer: ${completed.count { !it.optBoolean("finalAnswerAvailable", true) }} questions\n")
+                }
                 median(completed.map { it.optDouble("endToEndMs") })?.let { append("Median incl. engine load/close: %.2f s\n".format(it / 1000)) }
                 median(completed.map { it.optDouble("engineLoadMs") })?.let { append("Median per-question engine load: %.2f s\n".format(it / 1000)) }
                 median(completed.map { it.optJSONObject("runtimeMetrics")?.optDouble("prefillTokensPerSecond") ?: Double.NaN })?.let {
@@ -156,8 +162,9 @@ class ReportExporter(private val context: Context) {
                 val answer = output.optJSONObject("result")
                 append("${output.getString("configuration")} · ${answer?.optString("status") ?: "not run"}\n")
                 append("${answer?.optString("answer") ?: ""}\n\n")
+                answer?.optJSONArray("toolTrace")?.let { trace -> append("TOOL CONVERSATION (exact prompts, queries and evidence)\n${trace.toString(2)}\n\n") }
             }
-            append("RETRIEVED CONTEXT AND QUESTION (exact user prompt)\n${question.getString("prompt")}\n\n")
+            append("INITIAL USER PROMPT (context is here for replay; live evidence is in each tool trace above)\n${question.getString("prompt")}\n\n")
             append("============================================================\n\n")
         }
     }

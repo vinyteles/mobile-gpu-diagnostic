@@ -1,62 +1,52 @@
-# Mobile GPU benchmark
+# Mobile RAG benchmark
 
-Install your assigned APK and tap **Start / resume**. Each APK runs **one configuration with 120 questions**: 30 base questions in four wording styles. No Hugging Face account, token, or development tools are needed.
+Install your assigned APK and tap **Start / resume**. Each APK runs **one configuration on 120 questions**. The model decides when to search; retrieval and generation run on the phone. No Hugging Face account, token, or development tools are needed.
 
-Use one APK per two-hour RTL reservation. Run configurations in the order below on one phone; colleagues can run different configurations in parallel. The known-working GPU paths come first.
+Use one APK per two-hour Samsung RTL reservation. All cases request **Vulkan GPU for LFM3**; query embeddings use CPU. Run A first on a new phone type, then the other cases. Colleagues can run different APKs in parallel. The base Vulkan path worked in earlier replay tests; the complete live-retrieval combinations still need physical-device validation.
 
-| APK | Configuration | Max. answers | Model download | Estimated total, including **30 extra minutes** |
+| APK | Configuration | Max. answers | Fresh download | Estimated total, including **30 extra minutes** |
 |---|---|---:|---:|---:|
-| [1 · Energy mixed GPU](https://github.com/vinyteles/mobile-gpu-diagnostic/releases/download/v2.4.0/benchmark-2.4-config-1-energy-mixed48-gpu-arm64.apk) | Energy-Mobile mixed 4/8-bit · LiteRT-LM GPU | 120 | 2.03 GB | **~1 h** |
-| [2 · LFM Vulkan GPU](https://github.com/vinyteles/mobile-gpu-diagnostic/releases/download/v2.4.0/benchmark-2.4-config-2-lfm-vulkan-gpu-arm64.apk) | LFM3 Q4_K_M · Vulkan GPU | 120 | 1.10 GB | **~1 h 10 min** |
-| [3 · LFM LiteRT GPU](https://github.com/vinyteles/mobile-gpu-diagnostic/releases/download/v2.4.0/benchmark-2.4-config-3-lfm-litert-gpu-arm64.apk) | LFM3 mixed4 · LiteRT-LM GPU | 120 | 1.44 GB | **~1 h–1 h 15 min †** |
-| [4 · Gemma mobile GPU](https://github.com/vinyteles/mobile-gpu-diagnostic/releases/download/v2.4.0/benchmark-2.4-config-4-gemma-mobile-gpu-arm64.apk) | Gemma 4 E2B-IT mixed 2/4/8-bit · LiteRT-LM GPU | 120 | 2.59 GB | **~1 h–1 h 15 min †** |
-| [5 · Gemma Q8 GPU](https://github.com/vinyteles/mobile-gpu-diagnostic/releases/download/v2.4.0/benchmark-2.4-config-5-gemma-q8-gpu-arm64.apk) | Gemma 4 E2B-IT Q8_0 · Vulkan GPU, if RAM permits | Up to 120 | Up to 5.05 GB | **~1 h 30 min–2 h †** |
-| [6 · LFM CPU](https://github.com/vinyteles/mobile-gpu-diagnostic/releases/download/v2.4.0/benchmark-2.4-config-6-lfm-cpu-arm64.apk) | LFM3 Q4_K_M · llama.cpp CPU | 120 | 1.10 GB | **~2 h** |
-| [7 · Energy int8 CPU](https://github.com/vinyteles/mobile-gpu-diagnostic/releases/download/v2.4.0/benchmark-2.4-config-7-energy-int8-cpu-arm64.apk) | Energy-Mobile int8 · LiteRT-LM CPU | 120 | 2.97 GB | **~1 h 30 min** |
-| [8 · Energy mixed CPU](https://github.com/vinyteles/mobile-gpu-diagnostic/releases/download/v2.4.0/benchmark-2.4-config-8-energy-mixed48-cpu-arm64.apk) | Energy-Mobile mixed 4/8-bit · LiteRT-LM CPU | 120 | 2.03 GB | **~1 h 10 min** |
-| [9 · Gemma mobile CPU](https://github.com/vinyteles/mobile-gpu-diagnostic/releases/download/v2.4.0/benchmark-2.4-config-9-gemma-mobile-cpu-arm64.apk) | Gemma 4 E2B-IT mixed 2/4/8-bit · LiteRT-LM CPU | 120 | 2.59 GB | **~1 h 30 min–2 h †** |
+| [A](https://github.com/vinyteles/mobile-gpu-diagnostic/releases/download/v2.5.0/benchmark-2.5-case-A-arm64.apk) | LFM3 base Q4_K_M · MobileRAG+ · GPU | 120 | 1.94 GB | ~1 h 30 min–2 h † |
+| [B](https://github.com/vinyteles/mobile-gpu-diagnostic/releases/download/v2.5.0/benchmark-2.5-case-B-arm64.apk) | LFM3 fine-tuned Q4_K_M · MobileRAG+ · GPU | 120 | 1.94 GB | ~1 h 30 min–2 h † |
+| [C](https://github.com/vinyteles/mobile-gpu-diagnostic/releases/download/v2.5.0/benchmark-2.5-case-C-arm64.apk) | LFM3 base Q4_K_M · F6 · GPU | 120 | 1.48 GB | ~1 h 15 min–1 h 45 min † |
+| [D](https://github.com/vinyteles/mobile-gpu-diagnostic/releases/download/v2.5.0/benchmark-2.5-case-D-arm64.apk) | LFM3 fine-tuned Q4_K_M · F6 · GPU | 120 | 1.48 GB | ~1 h 15 min–1 h 45 min † |
+| [E](https://github.com/vinyteles/mobile-gpu-diagnostic/releases/download/v2.5.0/benchmark-2.5-case-E-arm64.apk) | LFM3 fine-tuned Q4_0 · MobileRAG+ · GPU | 120 | 1.89 GB | ~1 h 30 min–2 h † |
+| [F](https://github.com/vinyteles/mobile-gpu-diagnostic/releases/download/v2.5.0/benchmark-2.5-case-F-arm64.apk) | LFM3 fine-tuned Q4_0 · F6 · GPU | 120 | 1.43 GB | ~1 h 15 min–1 h 45 min † |
 
-Times are planning estimates for a Galaxy S25 FE-class phone. **The extra 30 minutes is already included per APK** for downloads, setup and delays. † Configurations 3, 4, 5 and 9 have provisional budgets, not measured phone durations. Slow downloads, heat or initialization can take longer. Configurations 5, 6 and 9 have little margin within two hours; use checkpoint/resume if needed. [Estimate basis](docs/TIMING.md).
+† These are provisional planning budgets, not measured Samsung durations. **The extra 30 minutes is already included.** Downloads, search decisions, heat and device freezes can exceed two hours; save the checkpoint and resume in another reservation if needed. Downloads include model weights, query embedders and retrieval data; the APK and working space are additional. Verified files on the same installation are reused.
 
-Downloads are model weights on a fresh phone; each APK adds about 58 MB, and runtime caches need extra storage. Configuration 5 is skipped if available RAM is insufficient.
+**All six cases require new runs, including A:** 720 attempted answers in total. Earlier config 2 used frozen contexts and cannot serve as the live tool-calling baseline. [Earlier replay APKs](docs/REPLAY-BENCHMARK.md) remain available separately.
 
-**Dataset and test sample**
+**Dataset and traceability**
 
-We use [UFGCEMIGONA/benchmark_mobile](https://huggingface.co/datasets/UFGCEMIGONA/benchmark_mobile), pinned to [revision `5a5aa32`](https://huggingface.co/datasets/UFGCEMIGONA/benchmark_mobile/tree/5a5aa32ae4087481be828e071aff169827ec2993). It contains **2,508 Portuguese prompts from 627 base questions**, each with four wording variants. Our fixed evaluation sample contains **30 base questions × 4 variants = 120 prompts per configuration**. All nine configurations receive the same sample in the same order, allowing up to **1,080 generated answers** across the complete test battery.
+The source is [UFGCEMIGONA/benchmark_mobile](https://huggingface.co/datasets/UFGCEMIGONA/benchmark_mobile), pinned to [revision `5a5aa32`](https://huggingface.co/datasets/UFGCEMIGONA/benchmark_mobile/tree/5a5aa32ae4087481be828e071aff169827ec2993). The full dataset has 2,508 Portuguese prompts from 627 base questions. Our unchanged sample is **30 base questions × four wording styles = 120 prompts per configuration**.
 
-| Source category | Full dataset prompts | Selected base questions | Test prompts per configuration |
+| Source category | Full dataset prompts | Selected base questions | Test prompts |
 |---|---:|---:|---:|
-| Regulatory standards (`normas_regulamentadoras`) | 1,536 | 18 | 72 |
-| Internal documents (`documentos_internos`) | 972 | 12 | 48 |
+| Regulatory standards | 1,536 | 18 | 72 |
+| Internal CEMIG documents | 972 | 12 | 48 |
 | **Total** | **2,508** | **30** | **120** |
 
-- **Wording styles:** 30 `clean`, 30 `technical`, 30 `operational`, and 30 `lay` prompts. Each base question appears once in every style, so these are related variants of 30 questions.
-- **Question types:** 32 factual, 32 conditional, 28 procedural, and 28 requiring multiple pieces of evidence (`multievidence`).
-- **Selection:** fixed quotas by source category and question type, with deterministic selection using seed `mobile-bench-120-v2`. Selection does not use model scores or answer quality. Both source files are published under Hugging Face's `train` split; the APK uses the selected subset for evaluation and performs no training.
+Every case receives 30 `clean`, 30 `technical`, 30 `operational`, and 30 `lay` prompts, in the same order. Question types are 32 factual, 32 conditional, 28 procedural and 28 requiring multiple pieces of evidence. These are related variants of 30 questions. Deterministic selection uses seed `mobile-bench-120-v2`, independently of model quality. The app performs no training.
 
-Each prompt includes its previously retrieved MobileRAG+ context. The phone benchmarks answer generation; retrieval is not rerun. Reference answers and evidence are included for evaluation and are never sent to the model.
+The [sample file](app/src/main/assets/tool-questions.json) preserves question/base-question IDs, categories, references, dataset pins and the shared tool protocol. **References and reference evidence never enter inference.** Reports preserve model-generated queries, retrieved and supplied passages, conversation prompts, model hashes and timings. Every answer is traceable to its actual input.
 
-**Every sample is traceable.** The public [sample file](app/src/main/assets/rag-replay.json), also included in every report ZIP, preserves the original question and base-question IDs, source category/document, reference answer and evidence, exact retrieved passages with document/chunk identifiers, prompt hashes, dataset revision and input-file checksums. Generated answers carry the question ID and prompt hash, connecting each result to its exact input. The [selection script](scripts/build-balanced-replay.py) documents how the sample was built.
+MobileRAG+ includes the benchmark's internal documents. [F6's published corpus](https://huggingface.co/datasets/juniorrios/cemig-nr-retrieval-assets) contains public NRs and manuals, **not internal CEMIG documents**. All 120 questions remain in each case; report regulatory/internal results separately, alongside overall scores and the four wording styles.
 
-<a id="start-a-session"></a>
+**Running and resuming**
 
-1. Use an ARM64 phone with Android 12 or later, or reserve a phone through Samsung RTL using your own account.
-2. Install the assigned APK, open it, and tap **Start / resume**. The app downloads its model and runs the questions automatically.
-3. Keep the app visible in the foreground; it prevents normal screen timeout while visible. Avoid locking the phone or switching apps. Expand the configuration to see its metrics.
-4. Before ending the reservation, tap **Stop** if it is still running and save/download a ZIP backup. For an unfinished run, check **Server saved N / 120 answers**. For a complete run, wait for **Hugging Face synced**, then use **Report upload status → Copy results link** to share it with the configuration number, phone model and RAM.
+1. Use an ARM64 Android 12+ phone with Vulkan support. Install one assigned APK.
+2. Tap **Start / resume**. The first screen shows each download and verification. The next shows question progress; expand the configuration for metrics.
+3. Keep the app visible and the phone plugged in. It prevents ordinary screen timeout while visible. Manually locking the phone, changing apps, an OS shutdown or a freeze can still interrupt it.
+4. Answers are checkpointed after each completed question. Reopen and tap **Start / resume** to retain completed answers and retry the unfinished question. An interrupted question restarts from its beginning, including its tool calls.
+5. Save/share the report ZIP before RTL ends, even if uploads appear healthy. Import it in another session/device to resume. A full phone freeze can prevent export until recovery; received checkpoints remain on the server.
 
-**How results are stored:** after **every completed question**, the cellphone saves the answer locally and immediately queues a cumulative report to our upload server. Network transfer runs separately from inference; while offline or busy, newer cumulative checkpoints can replace queued older copies while retaining all completed answers. The server acknowledges only after saving the report durably to disk. **Server saved N / 120 answers** shows received progress. Partial reports stay on the server, including after a stop or crash. Once all **120 assigned questions** are complete, the server uses an **HF access key stored only on the server** to publish the complete report to a separate public Hugging Face dataset for that session. **Hugging Face synced** confirms publication. The [HF session index](https://huggingface.co/datasets/vinyteles/mobilebench-index-v2) contains progress metadata and links; answer/report files appear on HF only after completion. Reports include answers, retrieved context, references, timing/memory metrics and device information.
+Installing another case APK updates the same app and preserves verified downloads and results. Finish or stop before switching. Live tool runs and historical replay runs have separate saved queues and cannot import each other's reports. Cross-device resumes retain per-answer device provenance; compare different devices separately when analyzing timing.
 
-**Screen sleep, interruptions and recovery**
+**Result storage**
 
-These benchmark APKs request Android's [keep-screen-on behavior](https://developer.android.com/develop/background-work/background-tasks/awake/screen-on) while their window is visible, so normal inactivity should not turn off the screen. Manual locking, switching apps, system restrictions, crashes or an RTL session ending can still interrupt the benchmark. **Continuous execution with the screen off is not guaranteed**; Android can [restrict background CPU and network activity](https://developer.android.com/training/monitoring-device-state/doze-standby).
+The **cellphone sends a cumulative checkpoint to our report server after every completed question**. The server durably keeps received questions. When the session's assigned case reaches all 120 completed attempts, the server uses its own Hugging Face credential to publish a public dataset. There is **no HF token in the APK or source repository**.
 
-- **Same phone, app data intact:** wake/unlock the phone and reopen the app. If progress is still advancing, let it continue. If the run has stopped, tap **Start / resume** or **Resume unfinished questions**, depending on the screen. After the app process closes, resuming inference requires this tap. Use Resume to continue the existing run; **Start a new run** begins a separate run.
-- **What is retained:** every completed answer is saved locally before the next question starts. Resume skips saved completed answers. An interrupted question is retried from its beginning, with the model reloaded after process interruption; partial output and the in-memory KV cache are not used to continue token generation. For example, if questions 1–37 were saved and question 38 was interrupted, resume keeps 1–37 and retries 38.
-- **New phone, cleared app data, or expired RTL reservation:** use a previously downloaded ZIP, or download the report from HF if the run completed. For an unfinished run already received by the server, the operator can recover its stored ZIP. Install the same configuration APK, choose **Import previous report ZIP**, then resume. Recovery retains completed answers present in that ZIP. ZIPs are saved and queued after every completed question, with additional snapshots about every minute while waiting and on stop/completion. A server copy can lag during connection failures; answers absent from the recovered ZIP must run again. Keep a downloaded ZIP backup before ending a reservation.
+Published datasets appear in [vinyteles/mobilebench-index-v2](https://huggingface.co/datasets/vinyteles/mobilebench-index-v2). Each upload session has its own dataset repository; colleagues running the same case get separate sessions. Partial runs stay on the server until complete. Upload failures retry automatically; local results remain safe while app storage survives. Use **Report upload status → New upload session** while stopped to create a separate session.
 
-**Updating from 2.3:** install the matching 2.4 APK over the existing app. Saved models and benchmark answers remain intact, and reopening queues the current saved run to the replacement upload server. Old upload credentials/checkpoints are kept separately and cannot block the new connection.
-
-On the same phone, installing another configuration APK updates the same app and preserves models and answers; finish or stop before switching. Reports can include earlier configurations, but each APK runs only its assigned configuration. If you reuse the same installation/run/configuration for a new reservation, choose **Report upload status → New upload session** while stopped; this changes the upload destination and keeps saved answers.
-
-[All APKs and checksums](https://github.com/vinyteles/mobile-gpu-diagnostic/releases/tag/v2.4.0) · [Technical details](docs/TECHNICAL.md) · [Validation](VALIDATION.md)
+[APKs and checksums](https://github.com/vinyteles/mobile-gpu-diagnostic/releases/tag/v2.5.0) · [Protocol and implementation](docs/TOOL-MATRIX.md) · [Validation](VALIDATION.md)
