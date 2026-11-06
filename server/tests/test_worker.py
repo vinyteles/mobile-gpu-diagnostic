@@ -207,7 +207,7 @@ def test_out_of_order_and_duplicates_never_lose_or_regress_completed_questions(s
 
 def test_every_single_configuration_profile_publishes_only_at_its_own_120(settings, store):
     client, hub, publisher = setup(settings, store)
-    for profile in range(101, 110):
+    for profile in range(101, 111):
         session, secret = register(client, batch=profile)
         assigned = BATCH_CONFIGURATIONS[profile][0]
         others = {configuration: 120 for configuration in CONFIGURATION_MODELS if configuration != assigned}

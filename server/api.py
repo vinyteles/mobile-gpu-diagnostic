@@ -188,7 +188,7 @@ class Relay:
         if not isinstance(installation, str) or not UUID.fullmatch(installation):
             raise ApiError(400, "invalid_installation", "installationId must be a lowercase UUID.")
         if not isinstance(batch, int) or isinstance(batch, bool) or batch not in BATCH_NAMES:
-            raise ApiError(400, "invalid_batch", "batch must be a supported APK profile: 101–109, or legacy 1–5.")
+            raise ApiError(400, "invalid_batch", "batch must be a supported APK profile: 101–110, or legacy 1–5.")
         if not isinstance(app_version, str) or not APP_VERSION.fullmatch(app_version):
             raise ApiError(400, "invalid_app_version", "appVersion must be a short version string.")
         if purpose not in PURPOSES:

@@ -47,7 +47,7 @@ class LiveCheck:
         Args:
             base_url: Public relay URL.
             fixture: rag-replay.json bytes.
-            batch: Single-configuration profile (101..109) used for the session.
+            batch: Single-configuration profile (101..110) used for the session.
         """
         self.client = httpx.Client(base_url=base_url.rstrip("/"), timeout=120)
         self.hub = httpx.Client(follow_redirects=True, timeout=120)
@@ -127,7 +127,7 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--base-url", required=True)
     parser.add_argument("--fixture", type=Path, default=FIXTURE_PATH)
-    parser.add_argument("--batch", type=int, default=101, choices=range(101, 110))
+    parser.add_argument("--batch", type=int, default=101, choices=range(101, 111))
     parser.add_argument("--expect-instance", help="Required serviceInstanceId")
     parser.add_argument("--restart-command", help="Command restarting the relay api+worker between phases")
     parser.add_argument("--settle", type=float, default=20, help="Seconds the worker gets to (not) publish partials")
