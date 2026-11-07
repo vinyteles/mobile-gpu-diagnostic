@@ -19,13 +19,13 @@ generation-only replay benchmarks. Configuration **10** is reserved for the deve
 | [9 · Gemma mobile CPU](https://github.com/vinyteles/mobile-gpu-diagnostic/releases/download/v2.4.0/benchmark-2.4-config-9-gemma-mobile-cpu-arm64.apk) | Gemma 4 E2B-IT mixed 2/4/8-bit | MobileRAG+ (frozen contexts) | CPU | LiteRT-LM | ✅ 120/120 | 2.59 GB | ~1 h 30 min–2 h † |
 | 10 · Energy int8 GPU — developer-provided (APK link pending) | Energy-Mobile int8 | Pending | GPU | LiteRT-LM | ✅ Reported by Leo (not server-verified) | Pending | Pending |
 | [11 · LFM3 base / MobileRAG+](https://github.com/vinyteles/mobile-gpu-diagnostic/releases/download/v2.5.0/benchmark-2.5-case-A-arm64.apk) | LFM3 base Q4_K_M | MobileRAG+ (live tool calls) | GPU (LLM); CPU (embeddings) | llama.cpp / Vulkan | ✅ 120/120 | 1.94 GB | ~1 h 30 min–2 h † |
-| [12 · LFM3 fine-tuned / MobileRAG+](https://github.com/vinyteles/mobile-gpu-diagnostic/releases/download/v2.5.0/benchmark-2.5-case-B-arm64.apk) | LFM3 fine-tuned Q4_K_M | MobileRAG+ (live tool calls) | GPU (LLM); CPU (embeddings) | llama.cpp / Vulkan | ⏳ 58/120 (partial) | 1.94 GB | ~1 h 30 min–2 h † |
+| [12 · LFM3 fine-tuned / MobileRAG+](https://github.com/vinyteles/mobile-gpu-diagnostic/releases/download/v2.5.0/benchmark-2.5-case-B-arm64.apk) | LFM3 fine-tuned Q4_K_M | MobileRAG+ (live tool calls) | GPU (LLM); CPU (embeddings) | llama.cpp / Vulkan | ✅ 120/120 | 1.94 GB | ~1 h 30 min–2 h † |
 | [13 · LFM3 base / F6](https://github.com/vinyteles/mobile-gpu-diagnostic/releases/download/v2.5.0/benchmark-2.5-case-C-arm64.apk) | LFM3 base Q4_K_M | F6 (live tool calls) | GPU (LLM); CPU (embeddings) | llama.cpp / Vulkan | — No server result | 1.48 GB | ~1 h 15 min–1 h 45 min † |
 | [14 · LFM3 fine-tuned / F6](https://github.com/vinyteles/mobile-gpu-diagnostic/releases/download/v2.5.0/benchmark-2.5-case-D-arm64.apk) | LFM3 fine-tuned Q4_K_M | F6 (live tool calls) | GPU (LLM); CPU (embeddings) | llama.cpp / Vulkan | — No server result | 1.48 GB | ~1 h 15 min–1 h 45 min † |
 | [15 · LFM3 fine-tuned Q4_0 / MobileRAG+](https://github.com/vinyteles/mobile-gpu-diagnostic/releases/download/v2.5.0/benchmark-2.5-case-E-arm64.apk) | LFM3 fine-tuned Q4_0 | MobileRAG+ (live tool calls) | GPU (LLM); CPU (embeddings) | llama.cpp / Vulkan | — No server result | 1.89 GB | ~1 h 30 min–2 h † |
 | [16 · LFM3 fine-tuned Q4_0 / F6](https://github.com/vinyteles/mobile-gpu-diagnostic/releases/download/v2.5.0/benchmark-2.5-case-F-arm64.apk) | LFM3 fine-tuned Q4_0 | F6 (live tool calls) | GPU (LLM); CPU (embeddings) | llama.cpp / Vulkan | — No server result | 1.43 GB | ~1 h 15 min–1 h 45 min † |
 
-<!-- benchmark-progress-updated -->Progress last changed: 2026-11-07T23:07:25.581Z.
+<!-- benchmark-progress-updated -->Progress last changed: 2026-11-07T23:35:41.899Z.
 
 Progress comes from the [public relay index](https://huggingface.co/datasets/vinyteles/mobilebench-index-v2/blob/main/sessions.json).
 Counts show the best saved checkpoint for one run; separate runs are never added together,
