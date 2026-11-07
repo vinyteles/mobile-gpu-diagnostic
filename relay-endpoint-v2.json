@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "endpoint": "https://july-retirement-adjustment-payroll.trycloudflare.com",
+  "endpoint": "https://distribute-eligibility-terminal-gilbert.trycloudflare.com",
   "serviceInstanceId": "mbr_1e97c341d9c4534311bfefe77ad7700f",
   "discoveryUrl": "https://huggingface.co/datasets/vinyteles/mobilebench-index-v2/resolve/main/endpoint.json",
   "temporaryTunnel": true
