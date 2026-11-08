@@ -1,8 +1,9 @@
 # Mobile RAG benchmark
 
 Configuration names link directly to their APKs. Configurations **1–9** are the published
-generation-only replay benchmarks. Configuration **10** is reserved for the developer-provided
-**Energy-Mobile int8 · LiteRT-LM GPU** build. Configurations **11–16** run live, model-controlled retrieval.
+generation-only replay benchmarks. Configuration **10** is the developer-provided
+**Energy-Mobile int8 RL · LiteRT-LM GPU** build, with verified results and an APK link still pending.
+Configurations **11–16** run live, model-controlled retrieval.
 
 ## Configurations 1–16
 
@@ -17,7 +18,7 @@ generation-only replay benchmarks. Configuration **10** is reserved for the deve
 | [7 · Energy int8 CPU](https://github.com/vinyteles/mobile-gpu-diagnostic/releases/download/v2.4.0/benchmark-2.4-config-7-energy-int8-cpu-arm64.apk) | Energy-Mobile int8 | MobileRAG+ (frozen contexts) | CPU | LiteRT-LM | ✅ 120/120 | 2.97 GB | ~1 h 30 min |
 | [8 · Energy mixed CPU](https://github.com/vinyteles/mobile-gpu-diagnostic/releases/download/v2.4.0/benchmark-2.4-config-8-energy-mixed48-cpu-arm64.apk) | Energy-Mobile mixed 4/8-bit | MobileRAG+ (frozen contexts) | CPU | LiteRT-LM | ✅ 120/120 | 2.03 GB | ~1 h 10 min |
 | [9 · Gemma mobile CPU](https://github.com/vinyteles/mobile-gpu-diagnostic/releases/download/v2.4.0/benchmark-2.4-config-9-gemma-mobile-cpu-arm64.apk) | Gemma 4 E2B-IT mixed 2/4/8-bit | MobileRAG+ (frozen contexts) | CPU | LiteRT-LM | ✅ 120/120 | 2.59 GB | ~1 h 30 min–2 h † |
-| 10 · Energy int8 GPU — developer-provided (APK link pending) | Energy-Mobile int8 | Pending | GPU | LiteRT-LM | ✅ Reported by Leo (not server-verified) | Pending | Pending |
+| 10 · Energy int8 RL GPU — developer-provided (APK link pending) | Energy-Mobile int8 RL | MobileRAG+ (frozen contexts) | GPU | LiteRT-LM | ✅ 120/120 | 2.97 GB | Pending |
 | [11 · LFM3 base / MobileRAG+](https://github.com/vinyteles/mobile-gpu-diagnostic/releases/download/v2.5.0/benchmark-2.5-case-A-arm64.apk) | LFM3 base Q4_K_M | MobileRAG+ (live tool calls) | GPU (LLM); CPU (embeddings) | llama.cpp / Vulkan | ✅ 120/120 | 1.94 GB | ~1 h 30 min–2 h † |
 | [12 · LFM3 fine-tuned / MobileRAG+](https://github.com/vinyteles/mobile-gpu-diagnostic/releases/download/v2.5.0/benchmark-2.5-case-B-arm64.apk) | LFM3 fine-tuned Q4_K_M | MobileRAG+ (live tool calls) | GPU (LLM); CPU (embeddings) | llama.cpp / Vulkan | ✅ 120/120 | 1.94 GB | ~1 h 30 min–2 h † |
 | [13 · LFM3 base / F6](https://github.com/vinyteles/mobile-gpu-diagnostic/releases/download/v2.5.0/benchmark-2.5-case-C-arm64.apk) | LFM3 base Q4_K_M | F6 (live tool calls) | GPU (LLM); CPU (embeddings) | llama.cpp / Vulkan | ✅ 120/120 | 1.48 GB | ~1 h 15 min–1 h 45 min † |
@@ -25,12 +26,12 @@ generation-only replay benchmarks. Configuration **10** is reserved for the deve
 | [15 · LFM3 fine-tuned Q4_0 / MobileRAG+](https://github.com/vinyteles/mobile-gpu-diagnostic/releases/download/v2.5.0/benchmark-2.5-case-E-arm64.apk) | LFM3 fine-tuned Q4_0 | MobileRAG+ (live tool calls) | GPU (LLM); CPU (embeddings) | llama.cpp / Vulkan | ⏳ 84/120 (partial) | 1.89 GB | ~1 h 30 min–2 h † |
 | [16 · LFM3 fine-tuned Q4_0 / F6](https://github.com/vinyteles/mobile-gpu-diagnostic/releases/download/v2.5.0/benchmark-2.5-case-F-arm64.apk) | LFM3 fine-tuned Q4_0 | F6 (live tool calls) | GPU (LLM); CPU (embeddings) | llama.cpp / Vulkan | — No server result | 1.43 GB | ~1 h 15 min–1 h 45 min † |
 
-<!-- benchmark-progress-updated -->Progress last changed: 2026-11-08T00:17:26.503Z.
+<!-- benchmark-progress-updated -->Progress last changed: 2026-11-08T00:36:00.613659+00:00.
 
 Progress comes from the [public relay index](https://huggingface.co/datasets/vinyteles/mobilebench-index-v2/blob/main/sessions.json).
 Counts show the best saved checkpoint for one run; separate runs are never added together,
 and earlier higher checkpoints are retained. ✅ means 120 recorded attempts, not 120 correct
-answers. Synthetic tests are excluded. Configuration 10 remains manually reported by Leo.
+answers. Synthetic tests are excluded. Configuration 10 has a [verified original report published directly to Hugging Face](https://huggingface.co/datasets/vinyteles/mobilebench-import-config10-energy-int8-rl-gpu-6b28bf164068); it is not in the relay-managed index.
 Configuration 7 also has a [verified 120/120 result from the previous relay](https://huggingface.co/datasets/vinyteles/mobilebench-relay-20261105-b107-9ca108d65f), retained here even though it is absent from the current index.
 To refresh locally with Node.js 22, run `node scripts/update-benchmark-progress.mjs`.
 
@@ -48,10 +49,13 @@ for a Galaxy S25 FE-class phone, with the extra 30 minutes already included. †
 the APK and runtime caches; configuration 5 is skipped if available RAM is insufficient.
 See the [replay protocol](https://github.com/vinyteles/mobile-gpu-diagnostic/blob/8c3d0213690d1ef2e59f25c843a3720bc7aeaecd/docs/REPLAY-BENCHMARK.md) and [timing basis](docs/TIMING.md).
 
-Configuration 10 is the developer-provided Energy-Mobile int8 build, reported to use LiteRT-LM
-on GPU. Its APK link, exact model hash, retrieval protocol, question count, download size and
-timings are not yet recorded. It is not included in the published replay APKs or their answer total;
-configuration 7 remains the existing Energy-Mobile int8 CPU baseline.
+Configuration 10 is the developer-provided Energy-Mobile int8 RL build using LiteRT-LM GPU.
+Its [original report and validation](https://huggingface.co/datasets/vinyteles/mobilebench-import-config10-energy-int8-rl-gpu-6b28bf164068)
+contain 120 distinct completed questions with the frozen MobileRAG+ fixture, model hash, and per-question timings.
+The source ZIP is named `benchmark-config8-energy-gpu-SM-S731N.zip`, but its execution metadata identifies
+configuration 10 (`gemma-int8-rl-gpu-replay`). The original ZIP is preserved unchanged.
+Its reported RL model hash differs from configuration 7's Energy-Mobile int8 CPU model.
+The APK link and planning time remain pending; this build is not included in the published replay APKs or their answer total.
 
 ## Running live-retrieval configurations 11–16
 
