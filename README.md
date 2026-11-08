@@ -14,7 +14,7 @@ generation-only replay benchmarks. Configuration **10** is reserved for the deve
 | [4 · Gemma mobile GPU](https://github.com/vinyteles/mobile-gpu-diagnostic/releases/download/v2.4.0/benchmark-2.4-config-4-gemma-mobile-gpu-arm64.apk) | Gemma 4 E2B-IT mixed 2/4/8-bit | MobileRAG+ (frozen contexts) | GPU | LiteRT-LM | ✅ 120/120 | 2.59 GB | ~1 h–1 h 15 min † |
 | [5 · Gemma Q8 GPU](https://github.com/vinyteles/mobile-gpu-diagnostic/releases/download/v2.4.0/benchmark-2.4-config-5-gemma-q8-gpu-arm64.apk) | Gemma 4 E2B-IT Q8_0 | MobileRAG+ (frozen contexts) | GPU, if RAM permits | llama.cpp / Vulkan | ⏭️ 0/120 (skipped) | Up to 5.05 GB | ~1 h 30 min–2 h † |
 | [6 · LFM CPU](https://github.com/vinyteles/mobile-gpu-diagnostic/releases/download/v2.4.0/benchmark-2.4-config-6-lfm-cpu-arm64.apk) | LFM3 Q4_K_M | MobileRAG+ (frozen contexts) | CPU | llama.cpp / CPU | ⏳ 27/120 (partial) | 1.10 GB | ~2 h |
-| [7 · Energy int8 CPU](https://github.com/vinyteles/mobile-gpu-diagnostic/releases/download/v2.4.0/benchmark-2.4-config-7-energy-int8-cpu-arm64.apk) | Energy-Mobile int8 | MobileRAG+ (frozen contexts) | CPU | LiteRT-LM | — No server result | 2.97 GB | ~1 h 30 min |
+| [7 · Energy int8 CPU](https://github.com/vinyteles/mobile-gpu-diagnostic/releases/download/v2.4.0/benchmark-2.4-config-7-energy-int8-cpu-arm64.apk) | Energy-Mobile int8 | MobileRAG+ (frozen contexts) | CPU | LiteRT-LM | ✅ 120/120 | 2.97 GB | ~1 h 30 min |
 | [8 · Energy mixed CPU](https://github.com/vinyteles/mobile-gpu-diagnostic/releases/download/v2.4.0/benchmark-2.4-config-8-energy-mixed48-cpu-arm64.apk) | Energy-Mobile mixed 4/8-bit | MobileRAG+ (frozen contexts) | CPU | LiteRT-LM | ✅ 120/120 | 2.03 GB | ~1 h 10 min |
 | [9 · Gemma mobile CPU](https://github.com/vinyteles/mobile-gpu-diagnostic/releases/download/v2.4.0/benchmark-2.4-config-9-gemma-mobile-cpu-arm64.apk) | Gemma 4 E2B-IT mixed 2/4/8-bit | MobileRAG+ (frozen contexts) | CPU | LiteRT-LM | ✅ 120/120 | 2.59 GB | ~1 h 30 min–2 h † |
 | 10 · Energy int8 GPU — developer-provided (APK link pending) | Energy-Mobile int8 | Pending | GPU | LiteRT-LM | ✅ Reported by Leo (not server-verified) | Pending | Pending |
@@ -22,15 +22,16 @@ generation-only replay benchmarks. Configuration **10** is reserved for the deve
 | [12 · LFM3 fine-tuned / MobileRAG+](https://github.com/vinyteles/mobile-gpu-diagnostic/releases/download/v2.5.0/benchmark-2.5-case-B-arm64.apk) | LFM3 fine-tuned Q4_K_M | MobileRAG+ (live tool calls) | GPU (LLM); CPU (embeddings) | llama.cpp / Vulkan | ✅ 120/120 | 1.94 GB | ~1 h 30 min–2 h † |
 | [13 · LFM3 base / F6](https://github.com/vinyteles/mobile-gpu-diagnostic/releases/download/v2.5.0/benchmark-2.5-case-C-arm64.apk) | LFM3 base Q4_K_M | F6 (live tool calls) | GPU (LLM); CPU (embeddings) | llama.cpp / Vulkan | ✅ 120/120 | 1.48 GB | ~1 h 15 min–1 h 45 min † |
 | [14 · LFM3 fine-tuned / F6](https://github.com/vinyteles/mobile-gpu-diagnostic/releases/download/v2.5.0/benchmark-2.5-case-D-arm64.apk) | LFM3 fine-tuned Q4_K_M | F6 (live tool calls) | GPU (LLM); CPU (embeddings) | llama.cpp / Vulkan | ✅ 120/120 | 1.48 GB | ~1 h 15 min–1 h 45 min † |
-| [15 · LFM3 fine-tuned Q4_0 / MobileRAG+](https://github.com/vinyteles/mobile-gpu-diagnostic/releases/download/v2.5.0/benchmark-2.5-case-E-arm64.apk) | LFM3 fine-tuned Q4_0 | MobileRAG+ (live tool calls) | GPU (LLM); CPU (embeddings) | llama.cpp / Vulkan | ⏳ 80/120 (partial) | 1.89 GB | ~1 h 30 min–2 h † |
+| [15 · LFM3 fine-tuned Q4_0 / MobileRAG+](https://github.com/vinyteles/mobile-gpu-diagnostic/releases/download/v2.5.0/benchmark-2.5-case-E-arm64.apk) | LFM3 fine-tuned Q4_0 | MobileRAG+ (live tool calls) | GPU (LLM); CPU (embeddings) | llama.cpp / Vulkan | ⏳ 84/120 (partial) | 1.89 GB | ~1 h 30 min–2 h † |
 | [16 · LFM3 fine-tuned Q4_0 / F6](https://github.com/vinyteles/mobile-gpu-diagnostic/releases/download/v2.5.0/benchmark-2.5-case-F-arm64.apk) | LFM3 fine-tuned Q4_0 | F6 (live tool calls) | GPU (LLM); CPU (embeddings) | llama.cpp / Vulkan | — No server result | 1.43 GB | ~1 h 15 min–1 h 45 min † |
 
-<!-- benchmark-progress-updated -->Progress last changed: 2026-11-08T00:16:00.801Z.
+<!-- benchmark-progress-updated -->Progress last changed: 2026-11-08T00:17:26.503Z.
 
 Progress comes from the [public relay index](https://huggingface.co/datasets/vinyteles/mobilebench-index-v2/blob/main/sessions.json).
 Counts show the best saved checkpoint for one run; separate runs are never added together,
 and earlier higher checkpoints are retained. ✅ means 120 recorded attempts, not 120 correct
 answers. Synthetic tests are excluded. Configuration 10 remains manually reported by Leo.
+Configuration 7 also has a [verified 120/120 result from the previous relay](https://huggingface.co/datasets/vinyteles/mobilebench-relay-20261105-b107-9ca108d65f), retained here even though it is absent from the current index.
 To refresh locally with Node.js 22, run `node scripts/update-benchmark-progress.mjs`.
 
 Hardware describes the requested execution device. For configurations 11–16, the backend
