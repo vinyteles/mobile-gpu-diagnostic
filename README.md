@@ -24,9 +24,9 @@ Configurations **11–16** run live, model-controlled retrieval.
 | [13 · LFM3 base / F6](https://github.com/vinyteles/mobile-gpu-diagnostic/releases/download/v2.5.0/benchmark-2.5-case-C-arm64.apk) | LFM3 base Q4_K_M | F6 (live tool calls) | GPU (LLM); CPU (embeddings) | llama.cpp / Vulkan | ✅ 120/120 | 1.48 GB | ~1 h 15 min–1 h 45 min † |
 | [14 · LFM3 fine-tuned / F6](https://github.com/vinyteles/mobile-gpu-diagnostic/releases/download/v2.5.0/benchmark-2.5-case-D-arm64.apk) | LFM3 fine-tuned Q4_K_M | F6 (live tool calls) | GPU (LLM); CPU (embeddings) | llama.cpp / Vulkan | ✅ 120/120 | 1.48 GB | ~1 h 15 min–1 h 45 min † |
 | [15 · LFM3 fine-tuned Q4_0 / MobileRAG+](https://github.com/vinyteles/mobile-gpu-diagnostic/releases/download/v2.5.0/benchmark-2.5-case-E-arm64.apk) | LFM3 fine-tuned Q4_0 | MobileRAG+ (live tool calls) | GPU (LLM); CPU (embeddings) | llama.cpp / Vulkan | ✅ 120/120 | 1.89 GB | ~1 h 30 min–2 h † |
-| [16 · LFM3 fine-tuned Q4_0 / F6](https://github.com/vinyteles/mobile-gpu-diagnostic/releases/download/v2.5.0/benchmark-2.5-case-F-arm64.apk) | LFM3 fine-tuned Q4_0 | F6 (live tool calls) | GPU (LLM); CPU (embeddings) | llama.cpp / Vulkan | ⏳ 91/120 (partial) | 1.43 GB | ~1 h 15 min–1 h 45 min † |
+| [16 · LFM3 fine-tuned Q4_0 / F6](https://github.com/vinyteles/mobile-gpu-diagnostic/releases/download/v2.5.0/benchmark-2.5-case-F-arm64.apk) | LFM3 fine-tuned Q4_0 | F6 (live tool calls) | GPU (LLM); CPU (embeddings) | llama.cpp / Vulkan | ✅ 120/120 | 1.43 GB | ~1 h 15 min–1 h 45 min † |
 
-<!-- benchmark-progress-updated -->Progress last changed: 2026-11-08T00:41:28.726Z.
+<!-- benchmark-progress-updated -->Progress last changed: 2026-11-08T01:02:39.626Z.
 
 Progress comes from the [public relay index](https://huggingface.co/datasets/vinyteles/mobilebench-index-v2/blob/main/sessions.json).
 Counts show the best saved checkpoint for one run; separate runs are never added together,
@@ -34,6 +34,13 @@ and earlier higher checkpoints are retained. ✅ means 120 recorded attempts, no
 answers. Synthetic tests are excluded. Configuration 10 has a [verified original report published directly to Hugging Face](https://huggingface.co/datasets/vinyteles/mobilebench-import-config10-energy-int8-rl-gpu-6b28bf164068); it is not in the relay-managed index.
 Configuration 7 also has a [verified 120/120 result from the previous relay](https://huggingface.co/datasets/vinyteles/mobilebench-relay-20261105-b107-9ca108d65f), retained here even though it is absent from the current index.
 To refresh locally with Node.js 22, run `node scripts/update-benchmark-progress.mjs`.
+
+The [QA and citation evaluation report](docs/qa-2026-11-08/README.md) covers all **14 complete
+configurations (1,680 attempts)** using GPT-OSS-120B. It includes configuration scores,
+document-type and wording breakdowns, source pins, and citation-audit diagnostics.
+Configurations 5 and 6 still lack complete datasets. The 24 live-tool attempts without a
+final answer remain explicit failures in the score denominator. Upload progress above
+and answer quality in the report are separate measurements.
 
 Hardware describes the requested execution device. For configurations 11–16, the backend
 column describes answer generation; query embeddings run on CPU.
