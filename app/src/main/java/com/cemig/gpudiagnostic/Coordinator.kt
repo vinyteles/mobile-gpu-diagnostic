@@ -15,7 +15,7 @@ class Coordinator(private val context: Context, private val configurations: List
                   private val reportEachQuestion: Boolean = true) {
     private val stopped = AtomicBoolean(false)
     private val active = AtomicBoolean(false)
-    private val stateFile = File(context.filesDir, if (APK_FIXTURE_ASSET == "rag-replay.json")
+    private val stateFile = File(context.filesDir, if (APK_CONFIGS.single().isV3) "queue-benchmark-v3.json" else if (APK_FIXTURE_ASSET == "rag-replay.json")
         "queue-benchmark-120-v2.json" else "queue-benchmark-120-tools-v1.json")
     private val preferences = context.getSharedPreferences("benchmark-120-v2", Context.MODE_PRIVATE)
     val selectedIds: Set<String> get() = configurations.map { it.id }.toSet()

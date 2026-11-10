@@ -214,6 +214,10 @@ class F6Retriever(private val context: Context, private val countTokens: (String
         val budget = (countTokens(raw) * .5).toInt()
         val search = searchIds(query, vector, .7, 2.0, true)
         val ids = search.getJSONArray("ids").let { a -> (0 until a.length()).map { a.getInt(it) } }
+        val candidateSources = JSONArray(ids.mapIndexed { rank, id ->
+            JSONObject().put("rank", rank + 1).put("document_id", chunks.getValue(id).getString("doc"))
+                .put("filename", label(id)).put("chunk_index", id).put("text", chunks.getValue(id).getString("text"))
+        })
         data class Candidate(val score: Double, val id: Int, val unit: Int)
         val candidates = mutableListOf<Candidate>()
         val terms = lexical(query).map { it.take(6) }.toSet()
@@ -242,7 +246,7 @@ class F6Retriever(private val context: Context, private val countTokens: (String
             if (used + cost > budget) continue
             selected.getOrPut(id) { mutableListOf() }.add(candidate.unit); picked.add(candidate); used += cost
         }
-        if (picked.isEmpty()) { val c = candidates.first(); selected[c.id] = mutableListOf(c.unit); picked.add(c) }
+        if (picked.isEmpty() && candidates.isNotEmpty()) { val c = candidates.first(); selected[c.id] = mutableListOf(c.unit); picked.add(c) }
         var text = render(selected, ids)
         while (countTokens(text) > budget && picked.size > 1) {
             val c = picked.removeAt(picked.lastIndex); selected.getValue(c.id).remove(c.unit)
@@ -254,7 +258,7 @@ class F6Retriever(private val context: Context, private val countTokens: (String
             JSONObject().put("rank", rank + 1).put("document_id", chunks.getValue(id).getString("doc"))
                 .put("filename", label(id)).put("chunk_index", id).put("text", passage).put("selectedUnits", JSONArray(selected.getValue(id)))
         }
-        return ToolEvidence(sources, search.put("retrieval", "f6").put("context", text).put("budget", budget).put("contextTokens", countTokens(text)))
+        return ToolEvidence(sources, search.put("candidateSources", candidateSources).put("configuredCandidateCount", ids.size).put("retrieval", "f6").put("context", text).put("budget", budget).put("contextTokens", countTokens(text)))
     }
     override fun close() { normDb.close(); manualDb.close() }
 }

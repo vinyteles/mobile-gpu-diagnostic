@@ -77,7 +77,7 @@ def test_single_configuration_profiles_accept_uploads_and_preserve_legacy_sessio
 
 def test_registration_rejects_weak_or_malformed_input(client):
     good = {"sessionSecret": secrets.token_urlsafe(32), "installationId": str(uuid.uuid4()), "batch": 1, "appVersion": "2.2"}
-    for field, value in [("sessionSecret", "short"), ("installationId", "not-a-uuid"), ("batch", 9), ("batch", True), ("batch", 101.0), ("batch", 116),
+    for field, value in [("sessionSecret", "short"), ("installationId", "not-a-uuid"), ("batch", 9), ("batch", True), ("batch", 101.0), ("batch", 124),
                          ("appVersion", "x" * 50), ("purpose", "other")]:
         response = client.post("/v1/sessions", json=dict(good, **{field: value}))
         assert response.status_code == 400, field

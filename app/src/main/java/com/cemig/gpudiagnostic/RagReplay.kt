@@ -24,10 +24,12 @@ fun citationCheck(answer: String, sources: JSONArray): JSONObject {
 
 /** Returns generated text and measured timings; caller checkpoints outside the timed interval. */
 @OptIn(ExperimentalApi::class)
-private fun replayAnswer(engine: Engine, systemPrompt: String, prompt: String, progress: (JSONObject) -> Unit): JSONObject {
+internal fun replayAnswer(engine: Engine, systemPrompt: String, prompt: String, progress: (JSONObject) -> Unit,
+                          tools: List<ToolProvider> = emptyList()): JSONObject {
     val setupStart = SystemClock.elapsedRealtimeNanos()
     engine.createConversation(ConversationConfig(
         systemInstruction = Contents.of(systemPrompt),
+        tools = tools, automaticToolCalling = false,
         samplerConfig = SamplerConfig(topK = 1, topP = 1.0, temperature = 0.0, seed = 0),
         maxOutputToken = OUTPUT_TOKENS,
         thinkingConfig = ThinkingConfig(enableThinking = false),
@@ -36,6 +38,7 @@ private fun replayAnswer(engine: Engine, systemPrompt: String, prompt: String, p
         val setupMs = (SystemClock.elapsedRealtimeNanos() - setupStart) / 1_000_000.0
         val text = StringBuilder()
         val channels = linkedMapOf<String, StringBuilder>()
+        val calls = JSONArray()
         val finished = CountDownLatch(1)
         val failure = AtomicReference<Throwable?>(null)
         var firstResponseNs = 0L
@@ -47,6 +50,7 @@ private fun replayAnswer(engine: Engine, systemPrompt: String, prompt: String, p
             override fun onMessage(message: Message) {
                 val now = SystemClock.elapsedRealtimeNanos()
                 if (firstResponseNs == 0L) firstResponseNs = now
+                message.toolCalls.forEach { call -> calls.put(JSONObject().put("name", call.name).put("arguments", JSONObject(call.arguments))) }
                 val chunk = message.toString()
                 if (chunk.isNotEmpty() && firstTextNs == 0L) firstTextNs = now
                 text.append(chunk)
@@ -74,8 +78,8 @@ private fun replayAnswer(engine: Engine, systemPrompt: String, prompt: String, p
         failure.get()?.let { throw it }
         val generationMs = (SystemClock.elapsedRealtimeNanos() - started) / 1_000_000.0
         progress(JSONObject(live.get().toString()))
-        check(text.isNotBlank()) { "Engine completed without visible answer text; raw channels retained in the checkpoint." }
-        val result = JSONObject().put("answer", text.toString()).put("conversationInitMs", setupMs)
+        check(text.isNotBlank() || calls.length() > 0 || tools.isNotEmpty()) { "Engine completed without visible answer text; raw channels retained in the checkpoint." }
+        val result = JSONObject().put("answer", text.toString()).put("nativeToolCalls", calls).put("conversationInitMs", setupMs)
             .put("rawChannels", JSONObject(channels.mapValues { it.value.toString() }))
             .put("unexpectedThinking", channels.any { it.value.isNotEmpty() } || text.contains("<think>"))
             .put("generationMs", generationMs).put("questionMs", setupMs + generationMs)
@@ -118,6 +122,7 @@ fun runReplay(context: Context, engine: Engine?, result: JSONObject, checkpoint:
     result.put("totalQuestions", indices.size)
     var sessionIndex = 0
     val liveConfig = BENCHMARK_CONFIGS.firstOrNull { it.id == result.optString("id") && it.liveTools }
+    val liteConversation = if (engine != null && liveConfig?.isV3 == true) LiteToolConversation(context, liveConfig, engine) else null
     val toolConversation = if (llama != null && liveConfig != null) ToolConversation(context, liveConfig, llama) else null
 
     // 2. Replay verbatim prompts, persisting each completed answer before advancing.
@@ -154,7 +159,8 @@ fun runReplay(context: Context, engine: Engine?, result: JSONObject, checkpoint:
                     live.keys().forEach { key -> entry.put(key, live.get(key)) }
                     checkpoint("generating")
                 }
-                if (toolConversation != null) toolConversation.answer(dataset.getString("systemPrompt"), question.getString("question"), progress)
+                if (liteConversation != null) liteConversation.answer(question.getString("question"), progress)
+                else if (toolConversation != null) toolConversation.answer(dataset.getString("systemPrompt"), question.getString("question"), progress)
                 else if (llama != null) llama.answer(dataset.getString("systemPrompt"), question.getString("prompt"), progress)
                 else if (freshEngineFactory != null) {
                     checkpoint("engine_initializing")
@@ -199,10 +205,12 @@ fun runReplay(context: Context, engine: Engine?, result: JSONObject, checkpoint:
             entry.put("status", "error").put("error", error.toString())
             checkpoint("question_failed")
             toolConversation?.close()
+            liteConversation?.close()
             throw error // Reusing a failed native conversation is unsafe; other configurations still run.
         }
     }
     session.put("finishedAtMs", System.currentTimeMillis())
     toolConversation?.close()
+            liteConversation?.close()
     checkpoint("engine_closing")
 }

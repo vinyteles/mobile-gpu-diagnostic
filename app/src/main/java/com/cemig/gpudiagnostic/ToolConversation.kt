@@ -100,6 +100,7 @@ class ToolConversation(private val context: Context, private val config: Benchma
                 response = if (accepted.isEmpty()) "No retrieved passage fits the remaining context budget. State that the available evidence is insufficient." else render(accepted)
                 sources.addAll(accepted)
                 event.put("sources", JSONArray(accepted)).put("omittedSources", retrieved.sources.size - accepted.size)
+                    .put("contextTokens", model.countTokens(response)).put("tokenCountMethod", "model_tokenizer").put("trigger", "model")
             }
             event.put("toolResponse", response).put("phase", "tool_completed")
             history += "<|im_start|>tool\n<tool_response>\n$response\n</tool_response><|im_end|>\n"
@@ -111,7 +112,8 @@ class ToolConversation(private val context: Context, private val config: Benchma
             .put("toolDecisionMs", decisionMs).put("retrievalMs", retrievalMs).put("finalGenerationMs", if (finalAvailable) last.optDouble("generationMs") else 0)
             .put("totalGeneratedTokens", totalGenerated).put("sources", JSONArray(sources)).put("toolTrace", trace)
             .put("finalAnswerAvailable", finalAvailable).put("stopReason", if (finalAvailable) last.optString("stopReason") else stopReason)
-            .put("retrieval", config.retrieval)
+            .put("retrieval", config.retrieval).put("toolPolicy", if (config.isV3) config.toolPolicy else "lfm-v2")
+            .put("fallbackSearchCount", 0).put("malformedToolCallCount", (0 until trace.length()).count { trace.getJSONObject(it).has("toolError") })
             .put("toolCallCount", (0 until trace.length()).count { trace.getJSONObject(it).has("retrievalTrace") })
             .put("toolRequestCount", trace.length() - if (finalAvailable) 1 else 0)
     }

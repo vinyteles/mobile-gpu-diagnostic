@@ -126,6 +126,7 @@ class MobileRagRetriever(private val context: Context) : LiveRetriever {
             graph.search(query, 5, meta.getInt("cluster_ef_search"))
         }.sortedWith(compareByDescending<Pair<Long, Float>> { it.second }.thenBy { it.first }).take(5)
         val chunks = hits.map { readChunk(it.first).put("retrieval_score", it.second) }
+        val candidatesBeforeCompression = JSONArray(chunks.map { JSONObject(it.toString()) })
         val known = hits.map { it.first }.toMutableSet()
         val neighbors = mutableListOf<Long>()
         for (offset in 1..2) for (chunk in chunks) {
@@ -148,6 +149,7 @@ class MobileRagRetriever(private val context: Context) : LiveRetriever {
             label to (vectorDot(vector, retrieval) / (vectorNorm(vector) * vectorNorm(retrieval)))
         }.sortedByDescending { it.second }
         val all = chunks + neighborsRanked.map { readChunk(it.first).put("retrieval_score", it.second) }
+        val expandedCandidates = JSONArray(all.map { JSONObject(it.toString()) })
         val searchMs = (System.nanoTime() - start) / 1e6
         val reduced = all.map { chunk ->
             val label = chunk.getLong("label")
@@ -171,6 +173,7 @@ class MobileRagRetriever(private val context: Context) : LiveRetriever {
         reduced.forEachIndexed { index, source -> source.put("rank", index + 1) }
         return ToolEvidence(reduced, JSONObject().put("retrieval", "mobileragplus").put("searchMs", searchMs)
             .put("retrievalAndScrMs", (System.nanoTime() - start) / 1e6)
+            .put("candidateSources", candidatesBeforeCompression).put("expandedCandidateSources", expandedCandidates).put("configuredTopK", 5)
             .put("probedClusters", JSONArray(clusters.map { it.first })).put("hitLabels", JSONArray(hits.map { it.first })))
     }
 

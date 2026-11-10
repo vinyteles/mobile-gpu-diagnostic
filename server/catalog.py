@@ -10,6 +10,9 @@ FIXTURE_SHA256 = "e43daa8d6887b372ad05a729c9dd53488fd29023bd228836c1e98060817c3c
 TOOL_PROTOCOL_ID = "mobile-rag-tools-120-v1"
 TOOL_FIXTURE_SHA256 = "92d338da6a1c1ed05139a7e6896b9077794bb2eb716d1eb7645bceb10b0dd489"
 PROTOCOL_FIXTURES = {PROTOCOL_ID: FIXTURE_SHA256, TOOL_PROTOCOL_ID: TOOL_FIXTURE_SHA256}
+V3_PROTOCOL_ID = "mobile-rag-pipelines-120-v3"
+V3_FIXTURE_SHA256 = "39713939db031fe2ca4e6229035b20d9b85a7250e8a3e997e0757401fcc4078a"
+PROTOCOL_FIXTURES[V3_PROTOCOL_ID] = V3_FIXTURE_SHA256
 QUESTION_COUNT = 120
 
 # Configuration id -> pinned model SHA-256, in ModelCatalog.BENCHMARK_CONFIGS order.
@@ -29,9 +32,17 @@ CONFIGURATION_MODELS = {
     "lfm3-tuned-q4km-vulkan-f6-tools-v1": "487c5a5530a599acc1827fffbf1b1fa17a5cdbe2f31082632fa3c572bdfcc8f3",
     "lfm3-tuned-q4-vulkan-mobileragplus-tools-v1": "94847d5bbcaae51a3cf63c6aed0063922e008521267d4ccdd364bf8533e85050",
     "lfm3-tuned-q4-vulkan-f6-tools-v1": "94847d5bbcaae51a3cf63c6aed0063922e008521267d4ccdd364bf8533e85050",
+    "gemma-mixed48-gpu-mobileragplus-energy-v3": "63a7374c71b404eb4f8cf8322beca2bc862061cba29adb368131c73e198f59e1",
+    "gemma-mixed48-gpu-f6-energy-v3": "63a7374c71b404eb4f8cf8322beca2bc862061cba29adb368131c73e198f59e1",
+    "gemma-base-mixed248-gpu-mobileragplus-flag-v3": "181938105e0eefd105961417e8da75903eacda102c4fce9ce90f50b97139a63c",
+    "gemma-base-mixed248-gpu-f6-flag-v3": "181938105e0eefd105961417e8da75903eacda102c4fce9ce90f50b97139a63c",
+    "lfm3-tuned-q4km-vulkan-mobileragplus-lfm-v3": "487c5a5530a599acc1827fffbf1b1fa17a5cdbe2f31082632fa3c572bdfcc8f3",
+    "lfm3-tuned-q4km-vulkan-f6-lfm-v3": "487c5a5530a599acc1827fffbf1b1fa17a5cdbe2f31082632fa3c572bdfcc8f3",
+    "lfm3-rlvr-v3s400-q4-vulkan-mobileragplus-lfm-v3": "689735f30a195be407fc56c5c4b7b27e3043c37b5ff2e58480477cda5992d6d8",
+    "lfm3-rlvr-v3s400-q4-vulkan-f6-lfm-v3": "689735f30a195be407fc56c5c4b7b27e3043c37b5ff2e58480477cda5992d6d8",
 }
 CONFIGURATION_FIXTURES = {
-    configuration: TOOL_FIXTURE_SHA256 if configuration.endswith("-tools-v1") else FIXTURE_SHA256
+    configuration: V3_FIXTURE_SHA256 if configuration.endswith("-v3") else TOOL_FIXTURE_SHA256 if configuration.endswith("-tools-v1") else FIXTURE_SHA256
     for configuration in CONFIGURATION_MODELS
 }
 
@@ -57,6 +68,14 @@ BATCH_NAMES = {
     113: "Case D · LFM3 tuned Q4_K_M · F6 GPU",
     114: "Case E · LFM3 tuned Q4_0 · MobileRAG+ GPU",
     115: "Case F · LFM3 tuned Q4_0 · F6 GPU",
+    116: "Config 17 · ENERGY · mobileragplus · v3",
+    117: "Config 18 · ENERGY · f6 · v3",
+    118: "Config 19 · FLAG · mobileragplus · v3",
+    119: "Config 20 · FLAG · f6 · v3",
+    120: "Config 21 · LFM · mobileragplus · v3",
+    121: "Config 22 · LFM · f6 · v3",
+    122: "Config 23 · LFM · mobileragplus · v3",
+    123: "Config 24 · LFM · f6 · v3",
 }
 
 # Session `batch` -> configurations that must all reach 120 completed questions before HF publication.

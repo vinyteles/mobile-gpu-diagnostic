@@ -1,7 +1,7 @@
 plugins { id("com.android.application") }
 
 val benchmarkProfile = providers.gradleProperty("benchmarkProfile").orElse("1").get().toInt()
-require(benchmarkProfile in 1..15)
+require(benchmarkProfile in 1..23)
 
 android {
     namespace = "com.cemig.gpudiagnostic"
@@ -11,12 +11,13 @@ android {
         applicationId = "com.cemig.gpudiagnostic"
         minSdk = 31
         targetSdk = 36
-        versionCode = 11
-        versionName = "2.5"
+        versionCode = 12
+        versionName = "3.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         // Wire IDs 1–5 remain reserved for the historical multi-configuration APKs.
         buildConfigField("int", "BENCHMARK_PROFILE", (100 + benchmarkProfile).toString())
-        manifestPlaceholders["benchmarkLabel"] = if (benchmarkProfile >= 10)
+        manifestPlaceholders["benchmarkLabel"] = if (benchmarkProfile >= 16) "CEMIG Benchmark · Config ${benchmarkProfile + 1}"
+            else if (benchmarkProfile >= 10)
             "CEMIG Benchmark · Case ${('A'.code + benchmarkProfile - 10).toChar()}"
             else "CEMIG Benchmark · Config $benchmarkProfile"
         buildConfigField("String", "LITERT_VERSION", "\"0.18.1\"")

@@ -1,5 +1,7 @@
 # Mobile RAG benchmark
 
+The new [v3 configurations 17–24](docs/BENCHMARK-V3.md) preserve Energy/LFM tool flows and add Gemma flag-based retrieval, with candidate/context retrieval metrics and QA evaluation.
+
 Install your assigned APK and tap **Start / resume**. Each APK runs **one configuration on 120 questions**. The model decides when to search; retrieval and generation run on the phone. No Hugging Face account, token, or development tools are needed.
 
 Use one APK per two-hour Samsung RTL reservation. All cases request **Vulkan GPU for LFM3**; query embeddings use CPU. Run A first on a new phone type, then the other cases. Colleagues can run different APKs in parallel. The base Vulkan path worked in earlier replay tests; the complete live-retrieval combinations still need physical-device validation.
