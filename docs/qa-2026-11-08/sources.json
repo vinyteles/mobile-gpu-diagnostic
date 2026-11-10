@@ -1,0 +1,128 @@
+[
+  {
+    "configuration": 1,
+    "repository": "vinyteles/mobilebench-relay-20261105-b101-c9e32afafd",
+    "commit": "9aeccc585e808f0f55507e217212d982bcff069b",
+    "archivePath": "runs/bench120-1793909547726-45d0ed03/latest.zip",
+    "archiveSha256": "35ddb8b0038d270c2d52ffd3049a0afaecb96b553410b76ecfe049ad581786ca",
+    "fetchedAt": "2026-11-08T00:50:56.508184+00:00",
+    "configuration_id": "gemma-mixed48-gpu-replay"
+  },
+  {
+    "configuration": 2,
+    "repository": "vinyteles/mobilebench-relay-20261106-b102-0cbfec5261",
+    "commit": "cc081216948ca4764991f91b00da1da6d6a6cbb1",
+    "archivePath": "runs/bench120-1793931533082-82073237/latest.zip",
+    "archiveSha256": "1964572ff52e7bc9b61cdbfa0c9f15b997fab64185c81cedfbf9dbcbddf42b66",
+    "configuration_id": "lfm3-q4km-vulkan-replay",
+    "fetchedAt": "2026-11-08T00:50:58.204938+00:00"
+  },
+  {
+    "configuration": 3,
+    "repository": "vinyteles/mobilebench-relay-20261105-b103-321b824629",
+    "commit": "0ed9b7907844995bf6a63c092d77171a5aaec594",
+    "archivePath": "runs/bench120-1793904111834-6d11cbc5/latest.zip",
+    "archiveSha256": "bcdf5c87cbc9b420339ea7aa33b12fe9525566ae00d0b0fa26a319c171eead38",
+    "fetchedAt": "2026-11-08T00:50:59.876815+00:00",
+    "configuration_id": "lfm3-mixed4-litert-gpu-replay"
+  },
+  {
+    "configuration": 4,
+    "repository": "vinyteles/mobilebench-relay-20261105-b104-5c152caa09",
+    "commit": "45dcc4f84e1ced6e33ede60747b93da75f3238cc",
+    "archivePath": "runs/bench120-1793909377570-6870af4d/latest.zip",
+    "archiveSha256": "a4cc3c37f0630e4b1aa844c8da7fac0654cfb1f3ff1c8b8d0bc1f13d206c9174",
+    "fetchedAt": "2026-11-08T00:51:01.590793+00:00",
+    "configuration_id": "gemma-base-mixed248-gpu-replay"
+  },
+  {
+    "configuration": 7,
+    "repository": "vinyteles/mobilebench-relay-20261105-b107-9ca108d65f",
+    "commit": "b78848d09f9d40c193ce1372774502dbc9ebfc5d",
+    "archivePath": "runs/bench120-1793909877340-ddc76d7b/latest.zip",
+    "archiveSha256": "72ebd0e7820b08e5dadf34c2213961bd6d3ec4c8d5c0a5f6c78ddeb25b18b0fb",
+    "fetchedAt": "2026-11-08T00:51:03.238022+00:00",
+    "configuration_id": "gemma-int8-cpu-replay"
+  },
+  {
+    "configuration": 8,
+    "repository": "vinyteles/mobilebench-relay-20261105-b108-0a6895bd26",
+    "commit": "0886d20419c244b9ffbf8ec49b7c349daa016e1f",
+    "archivePath": "runs/bench120-1793909547726-d2385585/latest.zip",
+    "archiveSha256": "25428799ee8281027ac4add821f486c59b03a8dd0d63ac04e5d01139904e8fd2",
+    "fetchedAt": "2026-11-08T00:51:05.000245+00:00",
+    "configuration_id": "gemma-mixed48-cpu-replay"
+  },
+  {
+    "configuration": 9,
+    "repository": "vinyteles/mobilebench-relay-20261105-b109-b79adc16ae",
+    "commit": "a1fff4672db751474b3a82a4983e599664bc53c2",
+    "archivePath": "runs/bench120-1793915701584-16fd95ad/latest.zip",
+    "archiveSha256": "ea369704318a15c77893cc1877cb41e90e5cdf0f68ba0776ffc95717759063a3",
+    "fetchedAt": "2026-11-08T00:51:06.903078+00:00",
+    "configuration_id": "gemma-base-mixed248-cpu-replay"
+  },
+  {
+    "configuration": 10,
+    "repository": "vinyteles/mobilebench-import-config10-energy-int8-rl-gpu-6b28bf164068",
+    "commit": "e05a644c3bfe0ccc2293b66c0b505fe93c3a6e48",
+    "archivePath": "runs/bench120-1793979549858/benchmark-config8-energy-gpu-SM-S731N.zip",
+    "archiveSha256": "6b28bf164068082e17ade7527c2096651f1913fb52650526016a05ca1282634b",
+    "configuration_id": "gemma-int8-rl-gpu-replay",
+    "fetchedAt": "2026-11-08T00:51:08.549255+00:00"
+  },
+  {
+    "configuration": 11,
+    "repository": "vinyteles/mobilebench-relay-20261106-b110-9e7b33193b",
+    "commit": "92b88d2defbee57d77352000673c48d7a49f5906",
+    "archivePath": "runs/bench120-1794004230103-427d0e5c/latest.zip",
+    "archiveSha256": "b0eb894b26ebc90f66380d36a14ca3ff3eaed4536a0028e477641154558b59f4",
+    "configuration_id": "lfm3-q4km-vulkan-mobileragplus-tools-v1",
+    "fetchedAt": "2026-11-08T00:51:10.324000+00:00"
+  },
+  {
+    "configuration": 12,
+    "repository": "vinyteles/mobilebench-relay-20261107-b111-f6c3ae0688",
+    "commit": "0915103c58f2f0e7be6a71473edd0d6b32238d3b",
+    "archivePath": "runs/bench120-1794091396343-6c165589/latest.zip",
+    "archiveSha256": "8961d3101c2761ba32002d5b2d4b24c80bc701b26e9124c5264c95b2fa49f3b1",
+    "configuration_id": "lfm3-tuned-q4km-vulkan-mobileragplus-tools-v1",
+    "fetchedAt": "2026-11-08T00:51:12.465144+00:00"
+  },
+  {
+    "configuration": 13,
+    "repository": "vinyteles/mobilebench-relay-20261107-b112-5de3244491",
+    "commit": "7d90ea62f5b2ac81b81a9d0211eb3609e9918a70",
+    "archivePath": "runs/bench120-1794094625812-1ff9a2b9/latest.zip",
+    "archiveSha256": "8e5435bd1694a7c08dfc6014bd7e4f5b6818ed716643c9aa7abdbc00706f4d79",
+    "configuration_id": "lfm3-q4km-vulkan-f6-tools-v1",
+    "fetchedAt": "2026-11-08T00:51:14.552515+00:00"
+  },
+  {
+    "configuration": 14,
+    "repository": "vinyteles/mobilebench-relay-20261107-b113-4e169fffd3",
+    "commit": "71052ee680b434b4cebd782a65ce2136476816cb",
+    "archivePath": "runs/bench120-1794094744444-d24ffae4/latest.zip",
+    "archiveSha256": "eaee76084e4afa013331ff16d1f6786ebadc48a46df83dfefbb61c3c32d47a16",
+    "configuration_id": "lfm3-tuned-q4km-vulkan-f6-tools-v1",
+    "fetchedAt": "2026-11-08T00:51:16.420970+00:00"
+  },
+  {
+    "configuration": 15,
+    "repository": "vinyteles/mobilebench-relay-20261107-b114-4843228fe1",
+    "commit": "ea78dcedfccefb3f095f4ef518b22cef4bdb3446",
+    "archivePath": "runs/bench120-1794095070760-ef69ce0c/latest.zip",
+    "archiveSha256": "388863a64f81d2ba0a289a61f226aa9442b32e6f92316221fe0e1cc6d288374b",
+    "configuration_id": "lfm3-tuned-q4-vulkan-mobileragplus-tools-v1",
+    "fetchedAt": "2026-11-08T00:51:18.281153+00:00"
+  },
+  {
+    "configuration": 16,
+    "repository": "vinyteles/mobilebench-relay-20261108-b115-be05f52778",
+    "commit": "c0da75e9ba4ce559b992705403ca4423e3f7a17f",
+    "archivePath": "runs/bench120-1794097067223-e911017d/latest.zip",
+    "archiveSha256": "c3df9e1acfef7b454c5858322ad79850f64f07445436371dffcaa24f7ec4b9a8",
+    "configuration_id": "lfm3-tuned-q4-vulkan-f6-tools-v1",
+    "fetchedAt": "2026-11-08T00:51:20.460631+00:00"
+  }
+]

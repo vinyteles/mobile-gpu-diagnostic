@@ -1,0 +1,15 @@
+configuration,name,protocol,attempts,judge_verdicts,correct,partially_correct,incorrect,abstained,no_final_answer,unresolved,mean_score,mean_score_denominator,fully_correct_percent_of_attempts,citation_audits,citation_not_applicable_no_final,citation_unresolved,citation_label_inconsistencies,app_citation_parser_disagreements,factual_claims,claims_with_valid_citation,valid_citation_claim_coverage_percent,fully_supported_cited_claims,fully_supported_cited_claims_percent,fully_supported_context_claims,fully_supported_context_claims_percent,median_question_seconds
+1,Energy mixed GPU,mobile-rag-replay-120-v2,120,120,61,24,35,0,0,0,0.608333,120,50.833,120,0,0,0,1,210,199,94.762,191,95.98,204,97.143,6.955
+2,LFM3 Q4_K_M Vulkan GPU,mobile-rag-replay-120-v2,120,120,56,25,39,0,0,0,0.570833,120,46.667,120,0,0,7,0,609,441,72.414,309,70.068,506,83.087,23.433
+3,LFM3 LiteRT GPU,mobile-rag-replay-120-v2,120,120,62,19,39,0,0,0,0.595833,120,51.667,120,0,0,2,0,454,363,79.956,269,74.105,402,88.546,22.631
+4,Gemma4 mixed GPU,mobile-rag-replay-120-v2,120,120,64,22,34,0,0,0,0.625,120,53.333,120,0,0,0,0,212,205,96.698,200,97.561,207,97.642,5.367
+7,Energy int8 CPU,mobile-rag-replay-120-v2,120,120,63,20,37,0,0,0,0.608333,120,52.5,120,0,0,0,0,196,190,96.939,181,95.263,188,95.918,24.637
+8,Energy mixed CPU,mobile-rag-replay-120-v2,120,120,40,35,45,0,0,0,0.479167,120,33.333,120,0,0,0,0,200,181,90.5,139,76.796,180,90.0,15.146
+9,Gemma4 mixed CPU,mobile-rag-replay-120-v2,120,120,64,20,36,0,0,0,0.616667,120,53.333,120,0,0,0,0,211,206,97.63,200,97.087,205,97.156,17.832
+10,Energy int8 RL GPU,mobile-rag-replay-120-v2,120,120,63,20,37,0,0,0,0.608333,120,52.5,120,0,0,0,0,197,191,96.954,186,97.382,193,97.97,10.515
+11,LFM3 base Q4_K_M / MobileRAG+,mobile-rag-tools-120-v1,120,117,40,16,55,6,3,0,0.4,120,33.333,117,3,0,5,0,508,173,34.055,92,53.179,395,77.756,26.762
+12,LFM3 tuned Q4_K_M / MobileRAG+,mobile-rag-tools-120-v1,120,118,58,13,47,0,2,0,0.5375,120,48.333,118,2,0,1,0,343,3,0.875,0,0.0,256,74.636,23.3
+13,LFM3 base Q4_K_M / F6,mobile-rag-tools-120-v1,120,111,36,9,61,5,9,0,0.3375,120,30.0,111,9,0,3,0,380,88,23.158,74,84.091,307,80.789,17.005
+14,LFM3 tuned Q4_K_M / F6,mobile-rag-tools-120-v1,120,113,39,10,64,0,7,0,0.366667,120,32.5,113,7,0,0,0,292,0,0.0,0,,224,76.712,13.991
+15,LFM3 tuned Q4_0 / MobileRAG+,mobile-rag-tools-120-v1,120,120,43,14,63,0,0,0,0.416667,120,35.833,120,0,0,0,0,288,7,2.431,5,71.429,207,71.875,21.896
+16,LFM3 tuned Q4_0 / F6,mobile-rag-tools-120-v1,120,117,38,10,67,2,3,0,0.358333,120,31.667,117,3,0,0,0,236,2,0.847,2,100.0,174,73.729,13.053
