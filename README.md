@@ -1,11 +1,41 @@
 # Mobile RAG benchmark
 
+## V3 APK downloads: configurations 17–24
+
+**Click the configuration name to download its APK** (about 58 MiB each).
+Install your assigned ARM64 APK and tap **Start / resume**. The app downloads and
+verifies the model and retrieval assets separately. Each configuration runs 120 questions.
+
+| Configuration name | Model | RAG | Hardware | Backend | Tool calling | Validation |
+|---|---|---|---|---|---|---|
+| [Config 17 · Energy / MobileRAG+](https://github.com/vinyteles/mobile-gpu-diagnostic/releases/download/v3.0.0/benchmark-v3-config-17-arm64.apk) | Energy-Mobile mixed 4/8-bit | MobileRAG+ | GPU | LiteRT-LM | Native `searchDocuments` | CPU emulator passed; phone GPU pending |
+| [Config 18 · Energy / F6](https://github.com/vinyteles/mobile-gpu-diagnostic/releases/download/v3.0.0/benchmark-v3-config-18-arm64.apk) | Energy-Mobile mixed 4/8-bit | F6 | GPU | LiteRT-LM | Native `searchDocuments` | CPU emulator passed; phone GPU pending |
+| [Config 19 · Gemma / MobileRAG+](https://github.com/vinyteles/mobile-gpu-diagnostic/releases/download/v3.0.0/benchmark-v3-config-19-arm64.apk) | Gemma 4 E2B-IT mixed 2/4/8-bit | MobileRAG+ | GPU | LiteRT-LM | `<call_tool>` flag | CPU emulator passed; phone GPU pending |
+| [Config 20 · Gemma / F6](https://github.com/vinyteles/mobile-gpu-diagnostic/releases/download/v3.0.0/benchmark-v3-config-20-arm64.apk) | Gemma 4 E2B-IT mixed 2/4/8-bit | F6 | GPU | LiteRT-LM | `<call_tool>` flag | CPU emulator passed; phone GPU pending |
+| [Config 21 · LFM3 fine-tuned / MobileRAG+](https://github.com/vinyteles/mobile-gpu-diagnostic/releases/download/v3.0.0/benchmark-v3-config-21-arm64.apk) | LFM3 fine-tuned Q4_K_M | MobileRAG+ | GPU | llama.cpp / Vulkan | Existing `buscar_norma` | CPU emulator passed; phone GPU pending |
+| [Config 22 · LFM3 fine-tuned / F6](https://github.com/vinyteles/mobile-gpu-diagnostic/releases/download/v3.0.0/benchmark-v3-config-22-arm64.apk) | LFM3 fine-tuned Q4_K_M | F6 | GPU | llama.cpp / Vulkan | Existing `buscar_norma` | CPU emulator passed; phone GPU pending |
+| [Config 23 · LFM3 RLVR / MobileRAG+](https://github.com/vinyteles/mobile-gpu-diagnostic/releases/download/v3.0.0/benchmark-v3-config-23-arm64.apk) | LFM3 RLVR v3s400 Q4_0 | MobileRAG+ | GPU | llama.cpp / Vulkan | Existing `buscar_norma` | CPU emulator passed; phone GPU pending |
+| [Config 24 · LFM3 RLVR / F6](https://github.com/vinyteles/mobile-gpu-diagnostic/releases/download/v3.0.0/benchmark-v3-config-24-arm64.apk) | LFM3 RLVR v3s400 Q4_0 | F6 | GPU | llama.cpp / Vulkan | Existing `buscar_norma` | CPU emulator passed; phone GPU pending |
+
+These are **prerelease APKs**: actual-model CPU emulator checks passed for all eight
+pipelines; physical-phone GPU validation and complete benchmark runs remain pending.
+Hardware above refers to answer generation; embeddings run on CPU. F6 keeps its NR/manual
+corpus without internal CEMIG documents. Retrieval and QA results will be reported separately
+for regulatory and internal questions. Nemotron is reserved for v4.
+
+Installing another configuration updates the same app and preserves verified downloads;
+finish or stop the current run before switching. V3 has separate checkpoints from v2.
+
+[Release and checksums](https://github.com/vinyteles/mobile-gpu-diagnostic/releases/tag/v3.0.0) ·
+[V3 protocol and evaluation](https://github.com/vinyteles/mobile-gpu-diagnostic/blob/86976e8440179587d4411ed868403b9a16606beb/docs/BENCHMARK-V3.md) ·
+[Validation details](https://github.com/vinyteles/mobile-gpu-diagnostic/blob/86976e8440179587d4411ed868403b9a16606beb/docs/V3-VALIDATION.md)
+
+## V2 configurations 1–16
+
 Configuration names link directly to their APKs. Configurations **1–9** are the published
 generation-only replay benchmarks. Configuration **10** is the developer-provided
 **Energy-Mobile int8 RL · LiteRT-LM GPU** build, with verified results and an APK link still pending.
 Configurations **11–16** run live, model-controlled retrieval.
-
-## Configurations 1–16
 
 | Configuration name | Model | RAG | Hardware | Backend | Progress | Download | Estimated total, including **30 extra minutes** |
 |---|---|---|---|---|---:|---:|---:|
