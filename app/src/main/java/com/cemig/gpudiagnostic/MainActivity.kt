@@ -119,7 +119,7 @@ class MainActivity : Activity() {
             }
             button(content, "Import previous report ZIP") { chooseReport() }
             label(content, "Required model downloads", 19f, true)
-            for (model in APK_MODELS) modelViews[model.id] = progressHeading(card(content), model.label)
+            for (model in requiredArtifacts(this, APK_CONFIGS.single())) modelViews[model.id] = progressHeading(card(content), model.label)
             val prompts = progressHeading(card(content), "Questions and references")
             prompts.first.update(1f, completed = true)
             prompts.second.text = "Included in this APK"
@@ -175,9 +175,9 @@ class MainActivity : Activity() {
         repeatButton?.isEnabled = !coordinator.isRunning
         quickAction?.show(if (coordinator.isRunning) "Stop" else "Start / resume")
         if (shownStage == "downloads") {
-            for (model in APK_MODELS) {
+            for (model in requiredArtifacts(this, APK_CONFIGS.single())) {
                 val views = modelViews.getValue(model.id)
-                val needed = BENCHMARK_CONFIGS.any { it.model.id == model.id && it.id in coordinator.selectedIds }
+                val needed = true
                 val progress = coordinator.downloads[model.id] ?: DownloadProgress("waiting", 0, model.bytes)
                 val problem = coordinator.downloadErrors[model.id]
                 val fraction = progress.bytes.toFloat() / progress.totalBytes.coerceAtLeast(1)

@@ -19,11 +19,11 @@ class ReportImportTest {
     private fun fixtureRun(): File {
         val run = File(context.cacheDir, "import-test-${System.nanoTime()}").apply { mkdirs() }
         val fixture = File(run, "rag-replay.json")
-        context.assets.open("rag-replay.json").use { input -> fixture.outputStream().use { input.copyTo(it) } }
+        context.assets.open(APK_FIXTURE_ASSET).use { input -> fixture.outputStream().use { input.copyTo(it) } }
         writeJson(File(run, "metadata.json"), JSONObject().put("protocolId", PROTOCOL_ID).put("device", deviceInfo(context))
             .put("fixtureSha256", sha256(fixture)).put("smokeTest", true))
         val question = replayDataset(context).getJSONArray("questions").getJSONObject(0)
-        val config = BENCHMARK_CONFIGS.first()
+        val config = APK_CONFIGS.first()
         writeJson(File(run, "${config.id}.json"), JSONObject().put("id", config.id).put("status", "cancelled")
             .put("modelSha256", config.model.sha256).put("answers", JSONArray().put(JSONObject()
                 .put("questionId", question.getString("id")).put("promptSha256", question.getString("promptSha256"))
@@ -36,7 +36,7 @@ class ReportImportTest {
         val archive = ReportExporter(context).archive(run)
         val imported = archive.inputStream().use { ReportImporter(context).restore(it) }
         assertNotEquals(run.path, imported.path)
-        val config = BENCHMARK_CONFIGS.first()
+        val config = APK_CONFIGS.first()
         val file = File(imported, "${config.id}.json")
         val result = readJson(file)!!
         val original = result.getJSONArray("answers").getJSONObject(0).toString()
@@ -50,7 +50,7 @@ class ReportImportTest {
 
     @Test fun changedProtocolOrModelIsRejected() {
         val run = fixtureRun()
-        val file = File(run, "${BENCHMARK_CONFIGS.first().id}.json")
+        val file = File(run, "${APK_CONFIGS.first().id}.json")
         val record = readJson(file)!!.put("modelSha256", "invalid")
         writeJson(file, record)
         assertTrue(runCatching { ReportExporter(context).archive(run).inputStream().use { ReportImporter(context).restore(it) } }.isFailure)

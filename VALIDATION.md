@@ -1,3 +1,21 @@
+# Benchmark 2.5 validation
+
+Built November 6, 2026. Six ARM64 APKs use package `com.cemig.gpudiagnostic`, version code 11 / version 2.5, profiles 110–115 (A–F). All cases run the new `mobile-rag-tools-120-v1` protocol; all 720 attempts require new phone runs.
+
+- Six release builds and `lintRelease` passed. Every APK's case label, version, DEX wire-profile constant, ARM64-only libraries, signing certificate, bundled fixtures and retrieval support data were verified. The signing certificate matches 2.4. Checksums accompany the release.
+- Retrieval parity: all 30 MobileRAG+ vector fixtures match search hits and reduced passages (the original float32 tie tolerance is retained). All 11 F6 queries, including rewritten queries, match the published Python retrieved IDs, gate, compression budget and exact compressed context. Native EmbeddingGemma query cosine exceeds 0.9999 against the pinned Python path.
+- Three real-model CPU integration tests passed: base LFM3 + MobileRAG+, tuned Q4_K_M + F6, and tuned Q4_0 + F6. Each model made an actual tool call, local retrieval returned evidence, and the model produced a final answer. These are emulator smoke checks, not Samsung GPU measurements or QA scores.
+- Tool-loop checks cover a rewritten second query, citation ranks across searches, a rejected third search and direct answers without unrequested retrieval. Replay/checkpoint, report import and 120-answer queue/resume checks passed. Across the targeted Android invocations, 22 distinct checks passed; one old global-ordering assertion was updated to check the two protocol families separately and passed its rerun.
+- F6's fp16 compression vectors are memory-mapped. Expanding them to float32 failed on the emulator's 192 MiB Java heap; the mapped implementation passes retrieval parity without raising the heap limit.
+- Server suite: **70 passed, 1 skipped** (optional historical example ZIP absent). It covers six new profiles, the 119/120 completion gate, protocol/fixture isolation and retained legacy behavior.
+- Deployed relay: the new profile 110 passed **22 checks over public HTTPS**, and the legacy profile 101 passed its live completion check. Existing service identity, sessions and three stored partial runs were preserved; the public tunnel was not restarted.
+- Android emulator → public relay → real Hugging Face: **OK (1 additional test)**. A one-answer checkpoint remained server-only; completing the same synthetic run to 120 published successfully. The public JSON and ZIP were fetched without authentication at commit `1ba31e576da3362386f43ead66c212f5b0741b9a`; the archive checksum, tool protocol, pinned fixture and 120 unique completed answers matched. [Android transport evidence](https://huggingface.co/datasets/vinyteles/mobilebench-relay-test-20261106-b110-c6ae9394de). These synthetic answers are transport evidence, not model-quality results.
+- Credential/private-host scans found no such material in the six release APKs. The source scan found only the pre-existing explicit dummy credential in a test. Model weights and server credentials are not bundled.
+
+Physical Samsung validation and the 120-question runs remain outstanding. Vulkan is requested without app CPU fallback, but new fine-tuned weights, simultaneous answer/retrieval memory use, thermal behavior and two-hour completion require the actual phone tests. The release is experimental; README time budgets are provisional.
+
+---
+
 # Benchmark 2.4 validation
 
 Built November 5, 2026. Nine ARM64 APKs use package `com.cemig.gpudiagnostic`, version code 10 / version 2.4. Each runs one configuration with 120 questions. Exact checksums accompany the [v2.4.0 release](https://github.com/vinyteles/mobile-gpu-diagnostic/releases/tag/v2.4.0).

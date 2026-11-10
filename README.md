@@ -1,5 +1,7 @@
 # Mobile RAG benchmark
 
+The new [v3 configurations 17–24](docs/BENCHMARK-V3.md) preserve Energy/LFM tool flows and add Gemma flag-based retrieval, with candidate/context retrieval metrics and QA evaluation.
+
 Configuration names link directly to their APKs. Configurations **1–9** are the published
 generation-only replay benchmarks. Configuration **10** is the developer-provided
 **Energy-Mobile int8 RL · LiteRT-LM GPU** build, with verified results and an APK link still pending.

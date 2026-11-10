@@ -49,7 +49,8 @@ class RagReplayTest {
             assertTrue(question.getString("prompt").contains(question.getString("question")))
             assertTrue(question.getJSONObject("reference").getString("answer").isNotBlank())
             assertTrue(question.getJSONObject("reference").getJSONArray("evidence").length() > 0)
-            assertTrue(question.getJSONArray("sources").length() > 0)
+            if (APK_CONFIGS.single().liveTools) assertEquals(question.getString("question"), question.getString("prompt"))
+            else assertTrue(question.getJSONArray("sources").length() > 0)
         }
     }
 
@@ -101,11 +102,12 @@ class RagReplayTest {
         assertTrue(rows.groupBy { it.getString("baseQaId") }.values.all { it.size == 4 })
         assertEquals(listOf("gemma-mixed48", "lfm3-q4km"), BENCHMARK_CONFIGS.take(2).map { it.model.id })
         assertTrue(BENCHMARK_CONFIGS.take(5).all { it.isGpu })
-        assertTrue(BENCHMARK_CONFIGS.drop(5).all { !it.isGpu })
+        assertTrue(BENCHMARK_CONFIGS.take(9).drop(5).all { !it.isGpu })
+        assertTrue(BENCHMARK_CONFIGS.filter { it.liveTools }.all { it.isGpu })
         assertTrue(BENCHMARK_CONFIGS[2].freshEngine)
         assertTrue(BENCHMARK_CONFIGS[4].memoryConditional)
         for (row in rows) {
-            val counts = row.getJSONObject("formattedInputTokens")
+            val counts = row.optJSONObject("formattedInputTokens") ?: continue
             counts.keys().forEach { assertTrue(counts.getInt(it) + OUTPUT_TOKENS + 128 <= CONTEXT_TOKENS) }
         }
     }

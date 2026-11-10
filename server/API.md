@@ -203,6 +203,7 @@ or client counts. For each configuration assigned to the session's `batch`, it c
 | `batch` | Assigned configurations (required answers) |
 |---|---|
 | 101–109 | the single configuration at position 1–9 of the catalog: `gemma-mixed48-gpu-replay`, `lfm3-q4km-vulkan-replay`, `lfm3-mixed4-litert-gpu-replay`, `gemma-base-mixed248-gpu-replay`, `gemma-base-q8-vulkan-replay`, `lfm3-q4km-cpu-replay`, `gemma-int8-cpu-replay`, `gemma-mixed48-cpu-replay`, `gemma-base-mixed248-cpu-replay` (120) |
+| 110–115 | One live tool-calling case A–F, protocol `mobile-rag-tools-120-v1` (120) |
 | legacy 1 / 2 / 3 / 4 / 5 | configurations 1+2 / 3+4 / 5+9 / 6 / 7+8 (240, 240, 240, 120, 240) |
 
 Results for other (imported) configurations are kept in the ZIP but never count.
@@ -225,10 +226,12 @@ ReportExporter names or `[A-Za-z0-9_.-]+.(log|trace)`; no directories or paths),
 `duplicate_member`, `member_too_large` / `uncompressed_too_large` (256 MiB per member,
 512 MiB total, enforced while inflating), `missing_fixture` / `fixture_mismatch` (the
 `rag-replay.json` SHA-256 and `metadata.fixtureSha256` must be
-`e43daa8d6887b372ad05a729c9dd53488fd29023bd228836c1e98060817c3cc4`), `missing_report`,
-`invalid_report`, `protocol_mismatch` (`mobile-rag-replay-120-v2` only),
+the protocol-specific pinned digest in `server/catalog.py`), `missing_report`,
+`invalid_report`, `protocol_mismatch` (`mobile-rag-replay-120-v2` or `mobile-rag-tools-120-v1`),
 `unknown_configuration`, `duplicate_configuration`, `model_mismatch` (pinned model SHA per
 configuration), `configuration_not_in_report`.
+Replay and live-tool configurations cannot share a fixture. Live tool traces and returned passages are nested in each answer inside `report.json`; ZIP member names are unchanged.
+
 Partial reports are valid: empty `results` during downloads, partial answers, `preparation`
 data, and imported cumulative results carrying earlier device provenance.
 

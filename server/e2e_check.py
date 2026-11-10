@@ -27,7 +27,12 @@ from pathlib import Path
 
 import httpx
 
-from server.catalog import BATCH_CONFIGURATIONS
+from server.catalog import (
+    BATCH_CONFIGURATIONS,
+    PROTOCOL_ID,
+    TOOL_PROTOCOL_ID,
+    V3_PROTOCOL_ID,
+)
 from server.synthetic import (
     FIXTURE_PATH,
     fixture_question_ids,
@@ -68,7 +73,9 @@ class LiveCheck:
 
     def snapshot(self, answers: int, queue_status: str = "running", status: str | None = None) -> bytes:
         """Return a cumulative synthetic ZIP with the first `answers` questions completed."""
-        report = synthetic_report(self.run_id, {self.configuration: answers}, self.question_ids, queue_status)
+        report = synthetic_report(self.run_id, {self.configuration: answers}, self.question_ids, queue_status,
+                                  protocolId=V3_PROTOCOL_ID if self.batch >= 116 else TOOL_PROTOCOL_ID if self.batch >= 110 else PROTOCOL_ID,
+                                  fixtureSha256=hashlib.sha256(self.fixture).hexdigest())
         if status:
             report["results"][0]["status"] = status
         return synthetic_zip(report, self.fixture)
@@ -126,14 +133,15 @@ def main() -> None:
     """Exercise the partial-storage gate, optional restart, completion publication and ordering."""
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--base-url", required=True)
-    parser.add_argument("--fixture", type=Path, default=FIXTURE_PATH)
-    parser.add_argument("--batch", type=int, default=101, choices=range(101, 110))
+    parser.add_argument("--fixture", type=Path)
+    parser.add_argument("--batch", type=int, default=101, choices=range(101, 124))
     parser.add_argument("--expect-instance", help="Required serviceInstanceId")
     parser.add_argument("--restart-command", help="Command restarting the relay api+worker between phases")
     parser.add_argument("--settle", type=float, default=20, help="Seconds the worker gets to (not) publish partials")
     parser.add_argument("--timeout", type=float, default=300)
     args = parser.parse_args()
-    live = LiveCheck(args.base_url, args.fixture.read_bytes(), args.batch)
+    fixture = args.fixture or (FIXTURE_PATH.with_name("v3-questions.json") if args.batch >= 116 else FIXTURE_PATH.with_name("tool-questions.json") if args.batch >= 110 else FIXTURE_PATH)
+    live = LiveCheck(args.base_url, fixture.read_bytes(), args.batch)
     t0 = int(time.time() * 1000)
 
     # 1. Health and identity.

@@ -26,4 +26,5 @@ fetch_source SPIRV-Headers https://github.com/KhronosGroup/SPIRV-Headers.git 6ef
 "$cmake_bin" -S "$project_dir/third_party/SPIRV-Headers" -B "$project_dir/third_party/spirv-build" \
     -DSPIRV_HEADERS_ENABLE_TESTS=OFF -DCMAKE_INSTALL_PREFIX="$project_dir/third_party/spirv-install"
 "$cmake_bin" --install "$project_dir/third_party/spirv-build"
+python3 "$project_dir/scripts/prepare-tool-assets.py" --native-only
 echo 'Native dependencies ready. Add SDK cmake/3.22.1/bin to PATH when invoking Gradle.'

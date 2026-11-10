@@ -210,7 +210,7 @@ def test_every_single_configuration_profile_publishes_only_at_its_own_120(settin
     for profile in range(101, 110):
         session, secret = register(client, batch=profile)
         assigned = BATCH_CONFIGURATIONS[profile][0]
-        others = {configuration: 120 for configuration in CONFIGURATION_MODELS if configuration != assigned}
+        others = {configuration: 120 for configuration in CONFIGURATION_MODELS if configuration != assigned and configuration.endswith("-replay")}
         almost = report_document(run_id=f"run-{profile}", answers={**others, assigned: 119})
         upload(client, session, secret, make_zip(almost), created_at_ms=T0 + 1)
         drain(publisher, store)

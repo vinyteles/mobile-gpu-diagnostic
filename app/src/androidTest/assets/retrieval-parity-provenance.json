@@ -1,0 +1,10 @@
+{
+  "mobileRagFixtureSource": "app-mobile-mobileragplus/src/ai/mobile-rag-plus/__tests__/fixtures/retrieval.json",
+  "mobileRagFixtureSha256": "8ed707ce32a0bceed9ddc017154b1cf5f6be8977092abb1b90843ea7a16ea5e9",
+  "f6RunnerRepository": "juniorrios/automobil-ultra-semnexo",
+  "f6RunnerRevision": "aff14d91b1b8922e67d348afbbc783759477a641",
+  "f6RunnerSha256": "2a45a223a34c4e6917c1603fbc795aff7c8d031fcbd2040368ce9284992f968c",
+  "f6AssetsRevision": "14753134e76c95bff4d594e24550cfb0f0271f2a",
+  "f6FixturesSha256": "dd5f6a480146fae04fd787a12031c87d46052d5eb768e627318a363689a47046",
+  "method": "F6 Pipeline(retrieval_only=True): embedder.query(question), context(question); CPU, four threads. Original questions at offsets 0,1,2,3,20,48,76,100,116 plus two focused NR queries. Test fixtures contain retrieval evidence, not model-generated benchmark answers."
+}

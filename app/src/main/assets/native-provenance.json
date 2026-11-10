@@ -33,5 +33,22 @@
     "repository": "google/gemma-4-E2B-it",
     "revision": "4adf15748de9e1a0097b6274cee9c15836c41c37",
     "sha256": "0a2c8073c878ab1da004bee933a998606537bbb62016310352c7285c3f01c5b5"
+  },
+  "liveToolProtocol": {
+    "id": "mobile-rag-tools-120-v1",
+    "maxSearchCalls": 2,
+    "maxGenerationTurns": 3,
+    "maxGeneratedTokensPerTurn": 512,
+    "maxGeneratedTokensTotal": 1536,
+    "retrievalLocation": "device",
+    "embeddingBackend": "cpu",
+    "answerBackend": "vulkan",
+    "queryEmbeddingsLoadedSequentially": true,
+    "answerModelLoadedOncePerWorker": true,
+    "fineTunedModelRepository": "juniorrios/automobil-ultra-semnexo",
+    "fineTunedRevision": "aff14d91b1b8922e67d348afbbc783759477a641",
+    "f6AssetsRevision": "14753134e76c95bff4d594e24550cfb0f0271f2a",
+    "sqliteVersion": "3.53.4",
+    "sqliteAmalgamationSha3_256": "628a44cfe82c66aed1ccbbe85a562d2e33ebe64b3288981ed76285612227934e"
   }
 }

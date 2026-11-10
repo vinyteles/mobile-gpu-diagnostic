@@ -7,6 +7,17 @@ val LFM_MODEL = ModelSpec("lfm3-q4km", "LFM3 1.7B · Q4_K_M",
     "https://huggingface.co/LiquidAI/LFM3-1.7B-GGUF/resolve/cd0c74c575b5c416f3011b5b4c298077f26ca8c2/LFM3-1.7B-Q4_K_M.gguf",
     1099627808L, "3793e1e6e2266919d6e015287221b41100175a98eddaba92e111aed3b05c93c4", "gguf")
 
+val LFM_TUNED_Q4KM = ModelSpec("lfm3-tuned-q4km", "LFM3 1.7B fine-tuned · Q4_K_M",
+    "https://huggingface.co/juniorrios/automobil-ultra-semnexo/resolve/aff14d91b1b8922e67d348afbbc783759477a641/cemig-lfm3-1.7b-nr-Q4_K_M.gguf",
+    1099627040L, "487c5a5530a599acc1827fffbf1b1fa17a5cdbe2f31082632fa3c572bdfcc8f3", "gguf")
+val LFM_TUNED_Q4 = ModelSpec("lfm3-tuned-q4", "LFM3 1.7B fine-tuned · Q4_0",
+    "https://huggingface.co/juniorrios/automobil-ultra-semnexo/resolve/aff14d91b1b8922e67d348afbbc783759477a641/cemig-lfm3-1.7b-nr-Q4_0.gguf",
+    1049614880L, "94847d5bbcaae51a3cf63c6aed0063922e008521267d4ccdd364bf8533e85050", "gguf")
+
+val LFM_RLVR_Q4 = ModelSpec("lfm3-rlvr-v3s400-q4", "LFM3 1.7B RLVR v3s400 · Q4_0",
+    "https://huggingface.co/juniorrios/automobil-ultra-semnexo/resolve/682e55452123b5451fea11be0fc46ab2a4aa1c17/v1.1-rlvr/cemig-lfm3-1.7b-nr-v3s400-Q4_0.gguf",
+    1049614880L, "689735f30a195be407fc56c5c4b7b27e3043c37b5ff2e58480477cda5992d6d8", "gguf")
+
 // Run GPU configurations before CPU so limited RTL sessions collect accelerator results first.
 val LFM_BACKENDS = listOf("vulkan", "cpu")
 fun lfmCaseId(backend: String) = "lfm3-q4km-$backend-replay"
@@ -28,7 +39,14 @@ val MODELS = listOf(
 const val CONTEXT_TOKENS = 4096
 const val OUTPUT_TOKENS = 512
 const val QUESTION_COUNT = 120
-const val PROTOCOL_ID = "mobile-rag-replay-120-v2"
+const val REPLAY_PROTOCOL_ID = "mobile-rag-replay-120-v2"
+const val TOOL_PROTOCOL_ID = "mobile-rag-tools-120-v1"
+const val V3_PROTOCOL_ID = "mobile-rag-pipelines-120-v3"
+val PROTOCOL_ID = when {
+    BuildConfig.BENCHMARK_PROFILE >= 116 -> V3_PROTOCOL_ID
+    BuildConfig.BENCHMARK_PROFILE >= 110 -> TOOL_PROTOCOL_ID
+    else -> REPLAY_PROTOCOL_ID
+}
 
 val LFM_LITERT = ModelSpec("lfm3-mixed4-litert", "LFM3 1.7B · LiteRT mixed 4/8-bit",
     "https://huggingface.co/litert-community/LFM3-1.7B-LiteRT/resolve/29f09e1eac2ccf753af14806dca96eb048e8baad/LFM3-1.7B_mixed_int4_ekv4096.litertlm",
@@ -41,11 +59,16 @@ val GEMMA_Q8 = ModelSpec("gemma-base-q8", "Gemma 4 E2B-IT · Q8_0 (experimental)
     5048352864L, "605d3c2647d7c58c1e4b5375ccb5702acf94c2611b4c8d4877812f8fdd32d053", "gguf")
 
 data class BenchmarkConfig(val model: ModelSpec, val backend: String, val tested: Boolean = false,
-                           val freshEngine: Boolean = false, val memoryConditional: Boolean = false) {
-    val id get() = "${model.id}-$backend-replay"
+                           val freshEngine: Boolean = false, val memoryConditional: Boolean = false,
+                           val retrieval: String = "mobileragplus", val matrixCase: String = "", val toolPolicy: String = "", val displayNumber: Int = 0) {
+    val isV3 get() = toolPolicy.isNotEmpty()
+    val liveTools get() = isV3 || matrixCase.isNotEmpty()
+    val id get() = if (isV3) "${model.id}-$backend-$retrieval-$toolPolicy-v3" else if (liveTools) "${model.id}-$backend-$retrieval-tools-v1" else "${model.id}-$backend-replay"
+    val fixtureAsset get() = if (isV3) "v3-questions.json" else if (liveTools) "tool-questions.json" else "rag-replay.json"
     val runtime get() = if (model.extension == "gguf") "llama.cpp" else "LiteRT-LM"
     val isGpu get() = backend != "cpu"
-    val label get() = "${model.label} · ${if (backend == "vulkan") "Vulkan GPU" else backend.uppercase()}"
+    val label get() = "${model.label} · ${if (backend == "vulkan") "Vulkan GPU" else backend.uppercase()}" +
+        if (isV3) " · Config $displayNumber · $retrieval · $toolPolicy" else if (matrixCase.isNotEmpty()) " · Case $matrixCase · ${if (retrieval == "f6") "F6" else "MobileRAG+"}" else ""
 }
 
 // Established GPU paths first, experimental GPUs next, every CPU configuration last.
@@ -59,6 +82,20 @@ val BENCHMARK_CONFIGS = listOf(
     BenchmarkConfig(MODELS[1], "cpu", tested = true),
     BenchmarkConfig(MODELS[0], "cpu", tested = true),
     BenchmarkConfig(GEMMA_BASE, "cpu"),
+    BenchmarkConfig(LFM_MODEL, "vulkan", matrixCase = "A"),
+    BenchmarkConfig(LFM_TUNED_Q4KM, "vulkan", matrixCase = "B"),
+    BenchmarkConfig(LFM_MODEL, "vulkan", retrieval = "f6", matrixCase = "C"),
+    BenchmarkConfig(LFM_TUNED_Q4KM, "vulkan", retrieval = "f6", matrixCase = "D"),
+    BenchmarkConfig(LFM_TUNED_Q4, "vulkan", matrixCase = "E"),
+    BenchmarkConfig(LFM_TUNED_Q4, "vulkan", retrieval = "f6", matrixCase = "F"),
+    BenchmarkConfig(MODELS[0], "gpu", retrieval = "mobileragplus", toolPolicy = "energy", displayNumber = 17),
+    BenchmarkConfig(MODELS[0], "gpu", retrieval = "f6", toolPolicy = "energy", displayNumber = 18),
+    BenchmarkConfig(GEMMA_BASE, "gpu", retrieval = "mobileragplus", toolPolicy = "flag", displayNumber = 19),
+    BenchmarkConfig(GEMMA_BASE, "gpu", retrieval = "f6", toolPolicy = "flag", displayNumber = 20),
+    BenchmarkConfig(LFM_TUNED_Q4KM, "vulkan", retrieval = "mobileragplus", toolPolicy = "lfm", displayNumber = 21),
+    BenchmarkConfig(LFM_TUNED_Q4KM, "vulkan", retrieval = "f6", toolPolicy = "lfm", displayNumber = 22),
+    BenchmarkConfig(LFM_RLVR_Q4, "vulkan", retrieval = "mobileragplus", toolPolicy = "lfm", displayNumber = 23),
+    BenchmarkConfig(LFM_RLVR_Q4, "vulkan", retrieval = "f6", toolPolicy = "lfm", displayNumber = 24),
 )
 val BENCHMARK_MODELS = BENCHMARK_CONFIGS.map { it.model }.distinctBy { it.id }
 
@@ -91,9 +128,24 @@ val BENCHMARK_BATCH_NAME = when (BuildConfig.BENCHMARK_PROFILE) {
     107 -> "Config 7 · Energy int8 CPU"
     108 -> "Config 8 · Energy mixed 4/8-bit CPU"
     109 -> "Config 9 · Gemma 4 E2B-IT mobile CPU"
+    110 -> "Case A · LFM3 base Q4_K_M · MobileRAG+ GPU"
+    111 -> "Case B · LFM3 tuned Q4_K_M · MobileRAG+ GPU"
+    112 -> "Case C · LFM3 base Q4_K_M · F6 GPU"
+    113 -> "Case D · LFM3 tuned Q4_K_M · F6 GPU"
+    114 -> "Case E · LFM3 tuned Q4_0 · MobileRAG+ GPU"
+    115 -> "Case F · LFM3 tuned Q4_0 · F6 GPU"
+    116 -> "Config 17 · ENERGY · mobileragplus · v3"
+    117 -> "Config 18 · ENERGY · f6 · v3"
+    118 -> "Config 19 · FLAG · mobileragplus · v3"
+    119 -> "Config 20 · FLAG · f6 · v3"
+    120 -> "Config 21 · LFM · mobileragplus · v3"
+    121 -> "Config 22 · LFM · f6 · v3"
+    122 -> "Config 23 · LFM · mobileragplus · v3"
+    123 -> "Config 24 · LFM · f6 · v3"
     else -> error("Unknown APK configuration")
 }
 // Each APK exposes and runs exactly one configuration. Keep the full catalog for report imports.
 val APK_CONFIGS = listOf(BENCHMARK_CONFIGS[BuildConfig.BENCHMARK_PROFILE - 101])
+val APK_FIXTURE_ASSET = APK_CONFIGS.single().fixtureAsset
 val APK_MODELS = APK_CONFIGS.map { it.model }
 val BATCH_CONFIG_IDS = APK_CONFIGS.map { it.id }.toSet()
