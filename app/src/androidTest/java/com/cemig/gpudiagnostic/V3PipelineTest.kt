@@ -94,6 +94,7 @@ class V3PipelineTest {
         assertTrue("Missing model ${model.path}", model.isFile)
         assertEquals(config.model.sha256, sha256(model))
         Engine(EngineConfig(modelPath = model.path, backend = Backend.CPU(threadCount = 2), maxNumTokens = CONTEXT_TOKENS)).use { engine ->
+            ExperimentalFlags.enableBenchmark = true
             engine.initialize()
             val search = Search()
             LiteToolConversation(context, config, engine, search).use {
@@ -121,6 +122,7 @@ class V3PipelineTest {
             }
         } else {
             Engine(EngineConfig(modelPath = model.path, backend = Backend.CPU(threadCount = 2), maxNumTokens = CONTEXT_TOKENS)).use { engine ->
+                ExperimentalFlags.enableBenchmark = true
                 engine.initialize()
                 LiteToolConversation(context, config, engine).use { it.answer(question, {}) }
             }

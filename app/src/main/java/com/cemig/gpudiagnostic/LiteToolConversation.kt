@@ -7,7 +7,18 @@ import org.json.JSONObject
 
 internal const val FLAG_INSTRUCTIONS = """Answer in Brazilian Portuguese. For greetings, thanks or casual conversation, answer directly.
 For questions requiring technical or documentary evidence, output exactly <call_tool> and nothing else.
-Do not answer technical questions from memory. The application will search the original question."""
+The marker <call_tool> is the COMPLETE response, not an opening XML tag. Stop immediately after its final >.
+Never add a tool name, a query, arguments, a closing tag, explanation or code fence.
+Do not answer technical questions from memory. The application will search the original question.
+Examples of complete responses:
+User: Hello!
+Assistant: Olá! Como posso ajudar?
+User: Which document specifies the inspection procedure for this equipment?
+Assistant: <call_tool>
+User: Thank you.
+Assistant: De nada!
+User: What does the maintenance manual require before replacing a component?
+Assistant: <call_tool>"""
 internal const val ENERGY_INSTRUCTIONS = """Answer in Brazilian Portuguese. For technical, regulatory, safety or internal-procedure questions,
 first call searchDocuments with a short query containing the question's keywords. Do not invent norm identifiers.
 Do not produce text before the call. Search once, then answer using the returned passages and cite their document titles.
