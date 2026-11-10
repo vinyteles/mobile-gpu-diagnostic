@@ -119,9 +119,11 @@ def prepare(archives: list[Path], output: Path) -> None:
             # 2. Preserve candidates per call; union separately for whole-question coverage.
             for question in questions.values():
                 answer = answers.get(question["id"], {})
+                if answer.get("smokeTest"):
+                    raise ValueError("Synthetic answer cannot enter benchmark evaluation")
                 status = answer.get("status", "not_run")
                 attempted = status in ("completed", "error")
-                final = status == "completed" and answer.get("finalAnswerAvailable", False)
+                final = status == "completed" and answer.get("finalAnswerAvailable", False) and bool(answer.get("answer", "").strip())
                 calls, candidates = [], []
                 for event in answer.get("toolTrace", []):
                     if "retrievalTrace" not in event:

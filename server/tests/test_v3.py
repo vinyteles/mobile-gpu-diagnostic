@@ -58,6 +58,8 @@ def test_document_hit_does_not_imply_evidence_survived():
 def test_pending_and_no_final_answers_have_different_denominators(tmp_path):
     identity = BATCH_CONFIGURATIONS[116][0]
     report = report_document(answers={identity: 2}, smoke=False, protocolId=V3_PROTOCOL_ID, fixtureSha256=V3_FIXTURE_SHA256)
+    for row in report["results"][0]["answers"]:
+        row.pop("smokeTest", None)
     archive = tmp_path / "phone.zip"
     archive.write_bytes(make_zip(report, fixture=FIXTURE))
     output = tmp_path / "evaluation"
@@ -89,6 +91,8 @@ def test_documented_cli_order_and_raw_context_stage_separation(tmp_path):
         "query": "model query", "effectiveQuery": "model query", "trigger": "model",
         "retrievalTrace": {"candidateSources": [raw]}, "retrievedSources": [final], "sources": [final],
     }])
+    for row in report["results"][0]["answers"]:
+        row.pop("smokeTest", None)
     archive = tmp_path / "phone.zip"
     archive.write_bytes(make_zip(report, fixture=FIXTURE))
     output = tmp_path / "evaluation"
